@@ -1,0 +1,345 @@
+.complaints-management {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 50%, #6366f1 100%);
+}
+
+.complaints-header {
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.complaints-header h1 {
+  font-size: 28px;
+  font-weight: bold;
+  color: #1f2937;
+  margin: 0 0 4px 0;
+}
+
+.complaints-header p {
+  color: #6b7280;
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Stats Cards */
+.complaints-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-card.stat-blue .stat-icon-wrapper {
+  background-color: #dbeafe;
+  color: #3b82f6;
+}
+
+.stat-card.stat-orange .stat-icon-wrapper {
+  background-color: #fed7aa;
+  color: #f97316;
+}
+
+.stat-card.stat-green .stat-icon-wrapper {
+  background-color: #d1fae5;
+  color: #10b981;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: bold;
+  color: #1f2937;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Content Section */
+.complaints-content {
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+}
+
+/* Filter Tabs */
+.filter-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #f3f4f6;
+  padding-bottom: 12px;
+}
+
+.filter-tab {
+  padding: 8px 20px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.filter-tab:hover {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.filter-tab.active {
+  color: #8b5cf6;
+  background-color: #f3e8ff;
+}
+
+.filter-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -14px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #8b5cf6;
+}
+
+/* Complaints Grid */
+.complaints-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+.complaint-card-modern {
+  background: linear-gradient(to bottom, #ffffff, #fafafa);
+  border-radius: 12px;
+  padding: 20px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.complaint-card-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, #8b5cf6, #6366f1);
+}
+
+.complaint-card-modern.priority-high::before {
+  background: linear-gradient(to bottom, #ef4444, #dc2626);
+}
+
+.complaint-card-modern:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+  border-color: #8b5cf6;
+}
+
+.complaint-header-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.complaint-id-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.complaint-id-modern {
+  font-size: 18px;
+  font-weight: 700;
+  color: #6366f1;
+}
+
+.priority-badge {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.priority-badge.priority-high {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.priority-badge.priority-medium {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge-modern {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge-modern.status-new {
+  background-color: #ef4444;
+  color: white;
+}
+
+.status-badge-modern.status-progress {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.complaint-body {
+  margin-bottom: 16px;
+}
+
+.complaint-issue {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
+
+.complaint-description {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+
+.complaint-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.meta-item svg {
+  color: #9ca3af;
+}
+
+.complaint-footer {
+  display: flex;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.action-btn-modern {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.resolve-btn-modern {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.resolve-btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.reply-btn-modern {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+}
+
+.reply-btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.investigate-btn-modern {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+}
+
+.investigate-btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+@media (max-width: 1024px) {
+  .complaints-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .complaints-management {
+    padding: 16px;
+  }
+  
+  .complaints-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .filter-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .complaint-footer {
+    flex-direction: column;
+  }
+}
