@@ -164,3 +164,22 @@
     flex-direction: column;
   }
 }
+
+.add-student-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.add-student-btn {
+  margin-top: 16px;
+  padding: 12px 24px;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}

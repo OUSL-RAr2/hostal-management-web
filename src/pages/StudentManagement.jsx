@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import './StudentManagement.css';
 
-const StudentManagement = () => {
+
+const StudentManagement = ({ setActiveMenu }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const studentsData = [
@@ -106,6 +107,11 @@ const StudentManagement = () => {
           </table>
         </div>
       </div>
+
+      <div className="add-student-container">
+          <button className="add-student-btn" onClick={() => setActiveMenu('Register Student')}>Add New Student</button>
+      </div>
+
     </div>
   );
 };
