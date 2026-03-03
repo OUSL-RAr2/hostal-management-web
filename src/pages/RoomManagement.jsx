@@ -207,11 +207,29 @@ const RoomManagement = ({ setActiveMenu }) => {
   };
 
   // Filter rooms based on selected filters
-  const filteredRooms = rooms.filter(room => {
-    const genderMatch = filterGender === 'all' || room.Gender === filterGender;
-    const floorMatch = filterFloor === 'all' || room.FloorNumber.toString() === filterFloor;
-    return genderMatch && floorMatch;
-  });
+  const filteredRooms = rooms
+    .filter(room => {
+      const genderMatch = filterGender === 'all' || room.Gender === filterGender;
+      const floorMatch = filterFloor === 'all' || room.FloorNumber.toString() === filterFloor;
+      return genderMatch && floorMatch;
+    })
+    .sort((a, b) => {
+      // Define custom floor order: G, F, S, T
+      const floorOrder = { 'G': 0, 'F': 1, 'S': 2, 'T': 3 };
+      const aPrefix = a.RoomNumber.charAt(0);
+      const bPrefix = b.RoomNumber.charAt(0);
+      
+      // First sort by floor prefix using custom order
+      const aOrder = floorOrder[aPrefix] !== undefined ? floorOrder[aPrefix] : 999;
+      const bOrder = floorOrder[bPrefix] !== undefined ? floorOrder[bPrefix] : 999;
+      
+      if (aOrder !== bOrder) {
+        return aOrder - bOrder;
+      }
+      
+      // Then sort by room number (alphanumeric)
+      return a.RoomNumber.localeCompare(b.RoomNumber, undefined, { numeric: true, sensitivity: 'base' });
+    });
 
   // Get unique floor numbers for filter dropdown
   const uniqueFloors = [...new Set(rooms.map(room => room.FloorNumber))].sort((a, b) => a - b);
