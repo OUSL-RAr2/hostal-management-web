@@ -1,50 +1,95 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import './StudentManagement.css';
 
 
 const StudentManagement = ({ setActiveMenu }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [studentsData, setStudentsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const studentsData = [
-    {
-      id: '223604391',
-      name: 'K.M.T.N. Deshapriya',
-      room: 'T-14',
-      status: 'Checked In',
-      checkIn: '07/09/2025 14:30',
-      checkOut: '-'
-    },
-    {
-      id: '123600601',
-      name: 'A.M.S.G. Athapaththu',
-      room: 'S-08',
-      status: 'Checked In',
-      checkIn: '07/09/2025 12:15',
-      checkOut: '-'
-    },
-    {
-      id: '623606783',
-      name: 'I.A.D.G.R. Jayaweera',
-      room: 'T-15',
-      status: 'Checked In',
-      checkIn: '07/09/2025 16:20',
-      checkOut: '-'
-    },
-    {
-      id: '323606301',
-      name: 'L.A.C.D. Lenagala',
-      room: 'T-10',
-      status: 'Checked In',
-      checkIn: '07/09/2025 11:30',
-      checkOut: '-'
-    },
-  ];
+  // Fetch students data when component mounts
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:5000/api/bookings', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Map backend data to frontend format
+        const mappedStudents = data.data.map(booking => ({
+          id: booking.User?.NIC || 'N/A',
+          name: booking.User?.Username || 'Unknown',
+          registrationNumber: booking.User?.Registration_Number || 'N/A',
+          room: booking.Room?.RoomNumber || 'N/A',
+          status: booking.Status,
+          checkIn: booking.CheckInDate ? new Date(booking.CheckInDate).toLocaleString() : '-',
+          checkOut: booking.CheckOutDate ? new Date(booking.CheckOutDate).toLocaleString() : '-',
+          uid: booking.User?.UID,
+          bookingId: booking.BookingID
+        }));
+        setStudentsData(mappedStudents);
+        setError(null);
+      } else {
+        setError(data.message || 'Failed to fetch students');
+      }
+    } catch (err) {
+      console.error('Error fetching students:', err);
+      setError('Failed to connect to server');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredStudents = studentsData.filter(student =>
     student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.id.includes(searchQuery)
+    student.id.includes(searchQuery) ||
+    (student.registrationNumber && student.registrationNumber.toString().includes(searchQuery))
   );
+
+  // Format status display
+  const formatStatus = (status) => {
+    switch(status) {
+      case 'checked_in':
+        return 'Checked In';
+      case 'checked_out':
+        return 'Checked Out';
+      case 'pending':
+        return 'Pending';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return status;
+    }
+  };
+
+  // Get status class for styling
+  const getStatusClass = (status) => {
+    switch(status) {
+      case 'checked_in':
+        return 'checked-in';
+      case 'checked_out':
+        return 'checked-out';
+      case 'pending':
+        return 'pending';
+      case 'cancelled':
+        return 'cancelled';
+      default:
+        return '';
+    }
+  };
 
   return (
     <div className="student-management">
@@ -75,44 +120,68 @@ const StudentManagement = ({ setActiveMenu }) => {
           />
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="loading-message">
+            Loading students data...
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
+
         {/* Students Table */}
-        <div className="table-container">
-          <table className="students-table">
-            <thead>
-              <tr>
-                <th>NIC</th>
-                <th>Name</th>
-                <th>Room</th>
-                <th>Status</th>
-                <th>Check-in</th>
-                <th>Check-out</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredStudents.map((student, index) => (
-                <tr key={index}>
-                  <td>{student.id}</td>
-                  <td>{student.name}</td>
-                  <td>{student.room}</td>
-                  <td>
-                    <span className="status-badge checked-in">
-                      {student.status}
-                    </span>
-                  </td>
-                  <td>{student.checkIn}</td>
-                  <td>{student.checkOut}</td>
-                  <td>
-                    <div className="action-buttons">
-                      <button className="action-btn view-btn">View</button>
-                      <button className="action-btn edit-btn">Edit</button>
-                    </div>
-                  </td>
+        {!loading && !error && (
+          <div className="table-container">
+            <table className="students-table">
+              <thead>
+                <tr>
+                  <th>NIC</th>
+                  <th>Name</th>
+                  <th>Room</th>
+                  <th>Status</th>
+                  <th>Check-in</th>
+                  <th>Check-out</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredStudents.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="no-data">
+                      {searchQuery ? 'No students found matching your search' : 'No students data available'}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredStudents.map((student, index) => (
+                    <tr key={student.bookingId || index}>
+                      <td>{student.id}</td>
+                      <td>{student.name}</td>
+                      <td>{student.room}</td>
+                      <td>
+                        <span className={`status-badge ${getStatusClass(student.status)}`}>
+                          {formatStatus(student.status)}
+                        </span>
+                      </td>
+                      <td>{student.checkIn}</td>
+                      <td>{student.checkOut}</td>
+                      <td>
+                        <div className="action-buttons">
+                          <button className="action-btn view-btn">View</button>
+                          <button className="action-btn edit-btn">Edit</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
     </div>
