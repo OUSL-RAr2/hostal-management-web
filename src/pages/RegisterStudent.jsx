@@ -4,7 +4,7 @@ import './RegisterStudent.css'
 const RegisterStudent = () => {
 
     const [formData, setFormData] = React.useState({
-        student_id: '',
+        nic: '',
         username: '',
         registration_number: '',
         center: '',
@@ -51,8 +51,8 @@ const RegisterStudent = () => {
         <h1>Register New Student</h1>
         <form className="register-form" onSubmit={handleSubmit}>
 
-            <label htmlFor="student_id">Student ID:</label>
-            <input type="text" id="student_id" name="student_id" required onChange={handleChange}/>
+            <label htmlFor="nic">NIC:</label>
+            <input type="text" id="nic" name="nic" required onChange={handleChange}/>
 
             <label htmlFor="username">User Name:</label>
             <input type="text" id="username" name="username" required onChange={handleChange} />
