@@ -96,9 +96,20 @@ const RegisterStudent = () => {
             <input type="number" id="registration_number" name="registration_number" required onChange={handleChange} value={formData.registration_number} />
 
             <label htmlFor="center">Center:<span className="required">*</span></label>
-            <input type="text" id="center" name="center" required onChange={handleChange} value={formData.center} />
+            <select id="center" name="center" required onChange={handleChange} value={formData.center}>
+                <option value="">Select Center</option>
+                <option value="Colombo">Colombo</option>
+                <option value="Kandy">Kandy</option>
+                <option value="Matara">Matara</option>
+                <option value="Jaffna">Jaffna</option>
+                <option value="Anuradhapura">Anuradhapura</option>
+                <option value="Batticaloa">Batticaloa</option>
+                <option value="Kurunegala">Kurunegala</option>
+                <option value="Badulla">Badulla</option>
+                <option value="Ratnapura">Ratnapura</option>
+            </select>
 
-            <label htmlFor="distance_from_home">Distance From Home:<span className="required">*</span></label>
+            <label htmlFor="distance_from_home">Distance From Home (KM):<span className="required">*</span></label>
             <input type="number" id="distance_from_home" name="distance_from_home" required onChange={handleChange} value={formData.distance_from_home} />
 
             <label htmlFor="faculty">Faculty:<span className="required">*</span></label>
