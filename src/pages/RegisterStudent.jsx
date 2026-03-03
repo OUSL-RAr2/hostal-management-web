@@ -18,10 +18,21 @@ const RegisterStudent = () => {
     });
 
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
+        const { name, value } = e.target;
+        
+        // Auto-generate password when NIC is entered
+        if (name === 'nic') {
+            setFormData({
+                ...formData,
+                [name]: value,
+                password: 'U' + value
+            });
+        } else {
+            setFormData({
+                ...formData,
+                [name]: value
+            });
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -101,9 +112,6 @@ const RegisterStudent = () => {
 
             <label htmlFor="email">Email:</label>
             <input type="email" id="email" name="email" onChange={handleChange} value={formData.email} />
-
-            <label htmlFor="Password">Password:</label>
-            <input type="password" id="password" name="password" required onChange={handleChange} value={formData.password} />
 
             <label htmlFor="role">Role:</label>
             <select id="role" name="role" required onChange={handleChange} value={formData.role}>
