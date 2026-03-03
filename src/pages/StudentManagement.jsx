@@ -50,9 +50,16 @@ const StudentManagement = ({ setActiveMenu }) => {
     <div className="student-management">
       {/* Header */}
       <div className="student-header">
-        <h1>Student Management</h1>
-        <p>Manage student registrations and profiles</p>
+        <div className="student-header-content">
+          <h1>Student Management</h1>
+          <p>Manage student registrations and profiles</p>
+        </div>
+        <div className="add-student-container">
+          <button className="add-student-btn" onClick={() => setActiveMenu('Register Student')}>Add New Student</button>
+        </div>
+        
       </div>
+      
 
       {/* Search and Table Section */}
       <div className="student-content">
@@ -106,10 +113,6 @@ const StudentManagement = ({ setActiveMenu }) => {
             </tbody>
           </table>
         </div>
-      </div>
-
-      <div className="add-student-container">
-          <button className="add-student-btn" onClick={() => setActiveMenu('Register Student')}>Add New Student</button>
       </div>
 
     </div>
