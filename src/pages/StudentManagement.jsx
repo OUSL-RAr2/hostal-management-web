@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import './StudentManagement.css';
+import RegisterStudent from './RegisterStudent';
 
 
 const StudentManagement = ({ setActiveMenu }) => {
@@ -8,6 +9,7 @@ const StudentManagement = ({ setActiveMenu }) => {
   const [studentsData, setStudentsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch students data when component mounts
   useEffect(() => {
@@ -100,7 +102,7 @@ const StudentManagement = ({ setActiveMenu }) => {
           <p>Manage student registrations and profiles</p>
         </div>
         <div className="add-student-container">
-          <button className="add-student-btn" onClick={() => setActiveMenu('Register Student')}>Add New Student</button>
+          <button className="add-student-btn" onClick={() => setIsModalOpen(true)}>Add New Student</button>
         </div>
         
       </div>
@@ -184,6 +186,15 @@ const StudentManagement = ({ setActiveMenu }) => {
         )}
       </div>
 
+      {/* Register Student Modal */}
+      <RegisterStudent 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={() => {
+          setIsModalOpen(false);
+          fetchStudents(); // Refresh the student list
+        }}
+      />
     </div>
   );
 };

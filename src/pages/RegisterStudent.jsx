@@ -1,7 +1,9 @@
 import React from "react";
 import './RegisterStudent.css'
 
-const RegisterStudent = () => {
+const RegisterStudent = ({ isOpen, onClose, onSuccess }) => {
+    // Don't render if not open
+    if (!isOpen) return null;
 
     const [formData, setFormData] = React.useState({
         nic: '',
@@ -73,6 +75,8 @@ const RegisterStudent = () => {
                     password: '',
                     role: 'user'
                 });
+                // Call success callback to close modal and refresh
+                if (onSuccess) onSuccess();
             } else {
                 alert(`Failed to register student: ${data.message || data || 'Unknown error'}`);
             }
@@ -82,7 +86,9 @@ const RegisterStudent = () => {
     };
 
   return (
-    <div className="register-student">
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="register-student" onClick={(e) => e.stopPropagation()}>
+        <button className="close-modal-btn" onClick={onClose}>&times;</button>
         <h1>Register New Student</h1>
         <form className="register-form" onSubmit={handleSubmit}>
 
@@ -134,6 +140,7 @@ const RegisterStudent = () => {
 
             <button type="submit">Register</button>
         </form>
+      </div>
     </div>
   );
 }
