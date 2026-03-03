@@ -29,12 +29,6 @@ const AddRoom = () => {
                 body: JSON.stringify(formData)
             });
             
-            // Check if response is JSON
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                throw new Error('Backend server is not responding properly. Please make sure the server is running.');
-            }
-            
             const data = await response.json();
             
             if (response.ok) {
