@@ -5,6 +5,7 @@ import RoomManagement from './pages/RoomManagement';
 import './App.css';
 import StudentManagement from './pages/StudentManagement';
 import ComplaintsManagement from './pages/ComplaintsManagement';
+import Settings from './pages/Settings';
 import RegisterStudent from './pages/RegisterStudent';
 
 function App() {
@@ -26,11 +27,12 @@ function App() {
       case 'Reports':
         return <div className="coming-soon">Reports Page - Coming Soon</div>;
       case 'Settings':
-        return <div className="coming-soon">Settings Page - Coming Soon</div>;
+        return <Settings/>;
       case 'Register Student':
         return <RegisterStudent />;
       default:
         return <Dashboard />;
+      
     }
   };
 
