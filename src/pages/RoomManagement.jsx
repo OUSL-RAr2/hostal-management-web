@@ -4,7 +4,9 @@ import './RoomManagement.css';
 const RoomManagement = ({ setActiveMenu }) => {
   const [rooms, setRooms] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
+  const [assigningRoom, setAssigningRoom] = useState(null);
   const [editFormData, setEditFormData] = useState({
     roomNumber: '',
     floorNumber: '',
@@ -12,6 +14,14 @@ const RoomManagement = ({ setActiveMenu }) => {
     status: '',
     gender: ''
   });
+
+  // Assign modal states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [checkInDate, setCheckInDate] = useState('');
+  const [checkOutDate, setCheckOutDate] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
   // Fetch rooms from API
   useEffect(() => {
@@ -89,6 +99,107 @@ const RoomManagement = ({ setActiveMenu }) => {
   const handleCloseModal = () => {
     setIsEditModalOpen(false);
     setEditingRoom(null);
+  };
+
+  const handleOpenAssignModal = (room) => {
+    setAssigningRoom(room);
+    setIsAssignModalOpen(true);
+    setSearchQuery('');
+    setSearchResults([]);
+    setSelectedStudent(null);
+    setCheckInDate('');
+    setCheckOutDate('');
+  };
+
+  const handleCloseAssignModal = () => {
+    setIsAssignModalOpen(false);
+    setAssigningRoom(null);
+    setSearchQuery('');
+    setSearchResults([]);
+    setSelectedStudent(null);
+    setCheckInDate('');
+    setCheckOutDate('');
+  };
+
+  const handleSearchStudents = async () => {
+    if (!searchQuery.trim()) {
+      alert('Please enter a search term');
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(`http://localhost:5000/api/bookings/search-students?query=${encodeURIComponent(searchQuery)}`, {
+        credentials: 'include'
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        setSearchResults(data.data);
+        if (data.data.length === 0) {
+          alert('No students found');
+        }
+      } else {
+        alert(`Search failed: ${data.message}`);
+      }
+    } catch (error) {
+      alert(`Search error: ${error.message}`);
+      console.error('Search error:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectStudent = (student) => {
+    setSelectedStudent(student);
+    setSearchResults([]);
+    setSearchQuery('');
+  };
+
+  const handleAssignStudent = async () => {
+    if (!selectedStudent) {
+      alert('Please select a student');
+      return;
+    }
+
+    if (!checkInDate || !checkOutDate) {
+      alert('Please select check-in and check-out dates');
+      return;
+    }
+
+    if (new Date(checkInDate) >= new Date(checkOutDate)) {
+      alert('Check-out date must be after check-in date');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/bookings/assign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          userId: selectedStudent.UID,
+          roomId: assigningRoom.RoomID,
+          checkInDate: checkInDate,
+          checkOutDate: checkOutDate
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Student assigned successfully!');
+        handleCloseAssignModal();
+        fetchRooms(); // Refresh rooms
+      } else {
+        alert(`Assignment failed: ${data.message}`);
+      }
+    } catch (error) {
+      alert(`An error occurred: ${error.message}`);
+      console.error('Assignment error:', error);
+    }
   };
 
   const roomStats = [
@@ -176,7 +287,12 @@ const RoomManagement = ({ setActiveMenu }) => {
                         {room.Status === 'occupied' ? (
                           <button className="action-btn view-btn">View Details</button>
                         ) : (
-                          <button className="action-btn assign-btn">Assign</button>
+                          <button 
+                            className="action-btn assign-btn"
+                            onClick={() => handleOpenAssignModal(room)}
+                          >
+                            Assign
+                          </button>
                         )}
                         <button 
                           className="action-btn edit-btn" 
@@ -282,6 +398,151 @@ const RoomManagement = ({ setActiveMenu }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Student Modal */}
+      {isAssignModalOpen && (
+        <div className="modal-overlay" onClick={handleCloseAssignModal}>
+          <div className="modal-content assign-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Assign Student to Room {assigningRoom?.RoomNumber}</h2>
+              <button className="close-btn" onClick={handleCloseAssignModal}>&times;</button>
+            </div>
+            
+            <div className="assign-modal-body">
+              {/* Search Section */}
+              {!selectedStudent && (
+                <div className="search-section">
+                  <h3>Search Student</h3>
+                  <div className="search-input-group">
+                    <input
+                      type="text"
+                      placeholder="Enter student name or registration number"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearchStudents()}
+                      className="search-input"
+                    />
+                    <button 
+                      className="search-btn" 
+                      onClick={handleSearchStudents}
+                      disabled={isSearching}
+                    >
+                      {isSearching ? 'Searching...' : 'Search'}
+                    </button>
+                  </div>
+
+                  {/* Search Results */}
+                  {searchResults.length > 0 && (
+                    <div className="search-results">
+                      <h4>Search Results:</h4>
+                      {searchResults.map((student) => (
+                        <div 
+                          key={student.UID} 
+                          className="search-result-item"
+                          onClick={() => handleSelectStudent(student)}
+                        >
+                          <div className="student-info">
+                            <strong>{student.Username}</strong>
+                            <span className="reg-number">Reg: {student.Registration_Number}</span>
+                          </div>
+                          <button className="select-btn">Select</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Selected Student Details */}
+              {selectedStudent && (
+                <div className="selected-student-section">
+                  <div className="section-header">
+                    <h3>Student Details</h3>
+                    <button 
+                      className="change-student-btn"
+                      onClick={() => setSelectedStudent(null)}
+                    >
+                      Change Student
+                    </button>
+                  </div>
+                  
+                  <div className="student-details-card">
+                    <div className="detail-row">
+                      <span className="detail-label">Name:</span>
+                      <span className="detail-value">{selectedStudent.Username}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Registration Number:</span>
+                      <span className="detail-value">{selectedStudent.Registration_Number}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">NIC:</span>
+                      <span className="detail-value">{selectedStudent.NIC}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Contact:</span>
+                      <span className="detail-value">{selectedStudent.Contact_Number}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Email:</span>
+                      <span className="detail-value">{selectedStudent.Email || 'N/A'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Faculty:</span>
+                      <span className="detail-value">{selectedStudent.Faculty}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Center:</span>
+                      <span className="detail-value">{selectedStudent.Center}</span>
+                    </div>
+                  </div>
+
+                  {/* Date Selection */}
+                  <div className="date-selection">
+                    <h4>Booking Period</h4>
+                    <div className="date-inputs">
+                      <div className="form-group">
+                        <label htmlFor="checkInDate">Check-in Date:</label>
+                        <input
+                          type="date"
+                          id="checkInDate"
+                          value={checkInDate}
+                          onChange={(e) => setCheckInDate(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="checkOutDate">Check-out Date:</label>
+                        <input
+                          type="date"
+                          id="checkOutDate"
+                          value={checkOutDate}
+                          onChange={(e) => setCheckOutDate(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Assign Button */}
+                  <div className="modal-actions">
+                    <button type="button" className="cancel-btn" onClick={handleCloseAssignModal}>
+                      Cancel
+                    </button>
+                    <button 
+                      type="button" 
+                      className="submit-btn assign-submit-btn"
+                      onClick={handleAssignStudent}
+                    >
+                      Assign Student
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
