@@ -6,6 +6,7 @@ import './App.css';
 import StudentManagement from './pages/StudentManagement';
 import ComplaintsManagement from './pages/ComplaintsManagement';
 import Settings from './pages/Settings';
+import CheckInOut from './pages/CkeckInOut';
 
 function App() {
   const [activeMenu, setActiveMenu] = useState('Dashboard');
@@ -22,7 +23,7 @@ function App() {
       case 'Complaints':
         return <ComplaintsManagement />;
       case 'Check-in/out':
-        return <div className="coming-soon">Check-in/out Page - Coming Soon</div>;
+        return <CheckInOut />;
       case 'Reports':
         return <div className="coming-soon">Reports Page - Coming Soon</div>;
       case 'Settings':
