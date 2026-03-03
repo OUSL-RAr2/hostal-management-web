@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import './StudentManagement.css';
 
-const StudentManagement = () => {
+
+const StudentManagement = ({ setActiveMenu }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const studentsData = [
@@ -49,9 +50,16 @@ const StudentManagement = () => {
     <div className="student-management">
       {/* Header */}
       <div className="student-header">
-        <h1>Student Management</h1>
-        <p>Manage student registrations and profiles</p>
+        <div className="student-header-content">
+          <h1>Student Management</h1>
+          <p>Manage student registrations and profiles</p>
+        </div>
+        <div className="add-student-container">
+          <button className="add-student-btn" onClick={() => setActiveMenu('Register Student')}>Add New Student</button>
+        </div>
+        
       </div>
+      
 
       {/* Search and Table Section */}
       <div className="student-content">
@@ -60,7 +68,7 @@ const StudentManagement = () => {
           <Search className="search-icon" size={20} />
           <input
             type="text"
-            placeholder="Search students by name or ID..."
+            placeholder="Search students by name or NIC..."
             className="search-input"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -72,7 +80,7 @@ const StudentManagement = () => {
           <table className="students-table">
             <thead>
               <tr>
-                <th>Student ID</th>
+                <th>NIC</th>
                 <th>Name</th>
                 <th>Room</th>
                 <th>Status</th>
@@ -106,6 +114,7 @@ const StudentManagement = () => {
           </table>
         </div>
       </div>
+
     </div>
   );
 };
