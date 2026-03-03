@@ -5,6 +5,7 @@ import RoomManagement from './pages/RoomManagement';
 import './App.css';
 import StudentManagement from './pages/StudentManagement';
 import ComplaintsManagement from './pages/ComplaintsManagement';
+import Settings from './pages/Settings';
 
 function App() {
   const [activeMenu, setActiveMenu] = useState('Dashboard');
@@ -25,7 +26,7 @@ function App() {
       case 'Reports':
         return <div className="coming-soon">Reports Page - Coming Soon</div>;
       case 'Settings':
-        return <div className="coming-soon">Settings Page - Coming Soon</div>;
+        return <Settings/>;
       default:
         return <Dashboard />;
     }
