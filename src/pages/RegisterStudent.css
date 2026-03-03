@@ -1,0 +1,107 @@
+
+.register-student {
+    width: 100%;
+    max-width: 500px;
+    height: 90vh;   
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    padding: 25px;
+    overflow-y: auto;
+    margin-left: 25%;
+    align-self: center;
+}
+
+.register-student::-webkit-scrollbar {
+    width: 8px;
+}
+
+.register-student::-webkit-scrollbar-thumb {
+    background-color: #4e73df;
+    border-radius: 10px;
+}
+
+.register-student h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.register-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.register-form label {
+    margin-top: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #555;
+}
+
+.register-form input[type="text"],
+.register-form input[type="number"],
+.register-form input[type="email"],
+.register-form input[type="password"] {
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+
+.register-form input:focus {
+    border-color: #4e73df;
+    outline: none;
+    box-shadow: 0 0 5px rgba(78, 115, 223, 0.5);
+}
+
+
+.register-form select {
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+
+.register-form select:focus {
+    border-color: #4e73df;
+    outline: none;
+    box-shadow: 0 0 5px rgba(78, 115, 223, 0.5);
+}
+
+
+.register-form button {
+    margin-top: 20px;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: #4e73df;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+
+.register-form button:hover {
+    background-color: #2e59d9;
+    transform: translateY(-2px);
+}
+
+
+@media (max-width: 600px) {
+    .register-student {
+        width: 90%;
+        height: 95vh;
+        padding: 15px;
+    }
+}
