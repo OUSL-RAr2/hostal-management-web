@@ -86,28 +86,36 @@ const RegisterStudent = () => {
         <h1>Register New Student</h1>
         <form className="register-form" onSubmit={handleSubmit}>
 
-            <label htmlFor="nic">NIC:</label>
+            <label htmlFor="nic">NIC:<span className="required">*</span></label>
             <input type="text" id="nic" name="nic" required onChange={handleChange} value={formData.nic}/>
 
-            <label htmlFor="username">User Name:</label>
+            <label htmlFor="username">User Name:<span className="required">*</span></label>
             <input type="text" id="username" name="username" required onChange={handleChange} value={formData.username} />
 
-            <label htmlFor="registration_number">Registration Number:</label>
+            <label htmlFor="registration_number">Registration Number:<span className="required">*</span></label>
             <input type="number" id="registration_number" name="registration_number" required onChange={handleChange} value={formData.registration_number} />
 
-            <label htmlFor="center">Center:</label>
+            <label htmlFor="center">Center:<span className="required">*</span></label>
             <input type="text" id="center" name="center" required onChange={handleChange} value={formData.center} />
 
-            <label htmlFor="distance_from_home">Distance From Home:</label>
+            <label htmlFor="distance_from_home">Distance From Home:<span className="required">*</span></label>
             <input type="number" id="distance_from_home" name="distance_from_home" required onChange={handleChange} value={formData.distance_from_home} />
 
-            <label htmlFor="faculty">Faculty:</label>
-            <input type="text" id="faculty" name="faculty" required onChange={handleChange} value={formData.faculty} />
+            <label htmlFor="faculty">Faculty:<span className="required">*</span></label>
+            <select id="faculty" name="faculty" required onChange={handleChange} value={formData.faculty}>
+                <option value="">Select Faculty</option>
+                <option value="Education">Education</option>
+                <option value="Engineering Technology">Engineering Technology</option>
+                <option value="Health Sciences">Health Sciences</option>
+                <option value="Humanities & Social Sciences">Humanities & Social Sciences</option>
+                <option value="Management Studies">Management Studies</option>
+                <option value="Natural Sciences">Natural Sciences</option>
+            </select>
 
-            <label htmlFor="contact_number">Contact Number:</label>
+            <label htmlFor="contact_number">Contact Number:<span className="required">*</span></label>
             <input type="text" id="contact_number" name="contact_number" required onChange={handleChange} value={formData.contact_number} />
 
-            <label htmlFor="emergency_contact">Emergency Contact:</label>
+            <label htmlFor="emergency_contact">Emergency Contact:<span className="required">*</span></label>
             <input type="text" id="emergency_contact" name="emergency_contact" required onChange={handleChange} value={formData.emergency_contact} />
 
             <label htmlFor="email">Email:</label>

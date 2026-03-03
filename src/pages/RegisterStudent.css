@@ -39,6 +39,11 @@
     color: #555;
 }
 
+.register-form label .required {
+    color: red;
+    margin-left: 4px;
+}
+
 .register-form input[type="text"],
 .register-form input[type="number"],
 .register-form input[type="email"],
