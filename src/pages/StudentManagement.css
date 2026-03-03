@@ -113,8 +113,45 @@
 }
 
 .status-badge.checked-in {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.status-badge.checked-out {
   background-color: #fee2e2;
   color: #dc2626;
+}
+
+.status-badge.pending {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge.cancelled {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.loading-message,
+.error-message {
+  text-align: center;
+  padding: 32px;
+  font-size: 16px;
+  color: #6b7280;
+}
+
+.error-message {
+  color: #dc2626;
+  background-color: #fee2e2;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.no-data {
+  text-align: center;
+  padding: 32px;
+  color: #9ca3af;
+  font-style: italic;
 }
 
 .action-buttons {
