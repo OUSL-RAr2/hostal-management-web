@@ -68,7 +68,7 @@ const StudentManagement = ({ setActiveMenu }) => {
           <Search className="search-icon" size={20} />
           <input
             type="text"
-            placeholder="Search students by name or ID..."
+            placeholder="Search students by name or NIC..."
             className="search-input"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -80,7 +80,7 @@ const StudentManagement = ({ setActiveMenu }) => {
           <table className="students-table">
             <thead>
               <tr>
-                <th>Student ID</th>
+                <th>NIC</th>
                 <th>Name</th>
                 <th>Room</th>
                 <th>Status</th>
