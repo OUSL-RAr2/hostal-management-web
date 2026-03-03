@@ -15,6 +15,10 @@ const RoomManagement = ({ setActiveMenu }) => {
     gender: ''
   });
 
+  // Filter states
+  const [filterGender, setFilterGender] = useState('all');
+  const [filterFloor, setFilterFloor] = useState('all');
+
   // Assign modal states
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -202,19 +206,29 @@ const RoomManagement = ({ setActiveMenu }) => {
     }
   };
 
+  // Filter rooms based on selected filters
+  const filteredRooms = rooms.filter(room => {
+    const genderMatch = filterGender === 'all' || room.Gender === filterGender;
+    const floorMatch = filterFloor === 'all' || room.FloorNumber.toString() === filterFloor;
+    return genderMatch && floorMatch;
+  });
+
+  // Get unique floor numbers for filter dropdown
+  const uniqueFloors = [...new Set(rooms.map(room => room.FloorNumber))].sort((a, b) => a - b);
+
   const roomStats = [
     { 
-      value: rooms.filter(r => r.Status === 'available').length, 
+      value: filteredRooms.filter(r => r.Status === 'available').length, 
       label: 'Available Rooms', 
       color: 'green' 
     },
     { 
-      value: rooms.filter(r => r.Status === 'occupied').length, 
+      value: filteredRooms.filter(r => r.Status === 'occupied').length, 
       label: 'Occupied Rooms', 
       color: 'red' 
     },
     { 
-      value: rooms.filter(r => r.Status === 'maintenance').length, 
+      value: filteredRooms.filter(r => r.Status === 'maintenance').length, 
       label: 'Under Maintenance', 
       color: 'yellow' 
     },
@@ -230,6 +244,55 @@ const RoomManagement = ({ setActiveMenu }) => {
         </div>
         <div className="add-room-container">
           <button className="add-room-btn" onClick={handleAddRoom}>Add New Room</button>
+        </div>
+      </div>
+
+      {/* Filter Section */}
+      <div className="filter-section">
+        <h2 className="section-title">Filter Rooms</h2>
+        <div className="filter-controls">
+          <div className="filter-group">
+            <label htmlFor="filter-gender">Gender:</label>
+            <select
+              id="filter-gender"
+              value={filterGender}
+              onChange={(e) => setFilterGender(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">All</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label htmlFor="filter-floor">Floor:</label>
+            <select
+              id="filter-floor"
+              value={filterFloor}
+              onChange={(e) => setFilterFloor(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">All Floors</option>
+              {uniqueFloors.map((floor) => (
+                <option key={floor} value={floor}>
+                  Floor {floor}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {(filterGender !== 'all' || filterFloor !== 'all') && (
+            <button
+              className="clear-filters-btn"
+              onClick={() => {
+                setFilterGender('all');
+                setFilterFloor('all');
+              }}
+            >
+              Clear Filters
+            </button>
+          )}
         </div>
       </div>
 
@@ -263,14 +326,16 @@ const RoomManagement = ({ setActiveMenu }) => {
               </tr>
             </thead>
             <tbody>
-              {rooms.length === 0 ? (
+              {filteredRooms.length === 0 ? (
                 <tr>
                   <td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>
-                    No rooms found. Add rooms to get started.
+                    {rooms.length === 0 
+                      ? 'No rooms found. Add rooms to get started.'
+                      : 'No rooms match the selected filters.'}
                   </td>
                 </tr>
               ) : (
-                rooms.map((room) => (
+                filteredRooms.map((room) => (
                   <tr key={room.RoomID}>
                     <td>{room.RoomNumber}</td>
                     <td>{room.FloorNumber}</td>

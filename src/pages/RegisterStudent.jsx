@@ -14,7 +14,7 @@ const RegisterStudent = () => {
         emergency_contact: '',
         email: '',
         password: '',
-        role: ''
+        role: 'user'
     });
 
     const handleChange = (e) => {
@@ -28,21 +28,45 @@ const RegisterStudent = () => {
         e.preventDefault();
         
         try {
+            // Convert numeric fields to numbers
+            const dataToSend = {
+                ...formData,
+                registration_number: parseInt(formData.registration_number),
+                distance_from_home: parseInt(formData.distance_from_home)
+            };
+
             const response = await fetch('http://localhost:5000/api/auth/sign-up', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 credentials: 'include',
-                body: JSON.stringify(formData)
+                body: JSON.stringify(dataToSend)
             });
+
+            const data = await response.json();
+
             if (response.ok) {
                 alert("Student registered successfully!");
+                // Reset form
+                setFormData({
+                    nic: '',
+                    username: '',
+                    registration_number: '',
+                    center: '',
+                    distance_from_home: '',
+                    faculty: '',
+                    contact_number: '',
+                    emergency_contact: '',
+                    email: '',
+                    password: '',
+                    role: 'user'
+                });
             } else {
-                alert("Failed to register student.");
+                alert(`Failed to register student: ${data.message || data || 'Unknown error'}`);
             }
         } catch (error) {
-            alert("An error occurred while registering the student.", error);
+            alert("An error occurred while registering the student: " + error.message);
         }
     };
 
@@ -52,37 +76,37 @@ const RegisterStudent = () => {
         <form className="register-form" onSubmit={handleSubmit}>
 
             <label htmlFor="nic">NIC:</label>
-            <input type="text" id="nic" name="nic" required onChange={handleChange}/>
+            <input type="text" id="nic" name="nic" required onChange={handleChange} value={formData.nic}/>
 
             <label htmlFor="username">User Name:</label>
-            <input type="text" id="username" name="username" required onChange={handleChange} />
+            <input type="text" id="username" name="username" required onChange={handleChange} value={formData.username} />
 
             <label htmlFor="registration_number">Registration Number:</label>
-            <input type="number" id="registration_number" name="registration_number" required onChange={handleChange} />
+            <input type="number" id="registration_number" name="registration_number" required onChange={handleChange} value={formData.registration_number} />
 
             <label htmlFor="center">Center:</label>
-            <input type="text" id="center" name="center" required onChange={handleChange} />
+            <input type="text" id="center" name="center" required onChange={handleChange} value={formData.center} />
 
             <label htmlFor="distance_from_home">Distance From Home:</label>
-            <input type="number" id="distance_from_home" name="distance_from_home" required onChange={handleChange} />
+            <input type="number" id="distance_from_home" name="distance_from_home" required onChange={handleChange} value={formData.distance_from_home} />
 
             <label htmlFor="faculty">Faculty:</label>
-            <input type="text" id="faculty" name="faculty" required onChange={handleChange} />
+            <input type="text" id="faculty" name="faculty" required onChange={handleChange} value={formData.faculty} />
 
             <label htmlFor="contact_number">Contact Number:</label>
-            <input type="text" id="contact_number" name="contact_number" required onChange={handleChange} />
+            <input type="text" id="contact_number" name="contact_number" required onChange={handleChange} value={formData.contact_number} />
 
             <label htmlFor="emergency_contact">Emergency Contact:</label>
-            <input type="text" id="emergency_contact" name="emergency_contact" required onChange={handleChange} />
+            <input type="text" id="emergency_contact" name="emergency_contact" required onChange={handleChange} value={formData.emergency_contact} />
 
             <label htmlFor="email">Email:</label>
-            <input type="email" id="email" name="email" onChange={handleChange} />
+            <input type="email" id="email" name="email" onChange={handleChange} value={formData.email} />
 
             <label htmlFor="Password">Password:</label>
-            <input type="password" id="password" name="password" required onChange={handleChange} />
+            <input type="password" id="password" name="password" required onChange={handleChange} value={formData.password} />
 
             <label htmlFor="role">Role:</label>
-            <select id="role" name="role" required onChange={handleChange}>
+            <select id="role" name="role" required onChange={handleChange} value={formData.role}>
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
             </select>
