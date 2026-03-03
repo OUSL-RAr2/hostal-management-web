@@ -113,12 +113,6 @@ const RegisterStudent = () => {
             <label htmlFor="email">Email:</label>
             <input type="email" id="email" name="email" onChange={handleChange} value={formData.email} />
 
-            <label htmlFor="role">Role:</label>
-            <select id="role" name="role" required onChange={handleChange} value={formData.role}>
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-            </select>
-
             <button type="submit">Register</button>
         </form>
     </div>
