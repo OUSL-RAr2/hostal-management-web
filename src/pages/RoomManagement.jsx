@@ -1,7 +1,16 @@
 import React from 'react';
 import './RoomManagement.css';
 
-const RoomManagement = () => {
+const RoomManagement = ({ setActiveMenu }) => {
+  const handleAddRoom = () => {
+    setActiveMenu('Add Room');
+  };
+
+  const handleEditRoom = (roomNumber) => {
+    // TODO: Open edit modal or navigate to edit room page
+    alert(`Edit Room ${roomNumber} functionality - To be implemented`);
+  };
+
   const roomStats = [
     { value: '8', label: 'Available Rooms', color: 'green' },
     { value: '28', label: 'Occupied Rooms', color: 'red' },
@@ -50,8 +59,13 @@ const RoomManagement = () => {
     <div className="room-management">
       {/* Header */}
       <div className="room-header">
-        <h1>Room Management</h1>
-        <p>Monitor room occupancy and allocation</p>
+        <div className="room-header-content">
+          <h1>Room Management</h1>
+          <p>Monitor room occupancy and allocation</p>
+        </div>
+        <div className="add-room-container">
+          <button className="add-room-btn" onClick={handleAddRoom}>Add New Room</button>
+        </div>
       </div>
 
       {/* Room Status Cards */}
@@ -95,11 +109,19 @@ const RoomManagement = () => {
                   </td>
                   <td className="occupants-cell">{room.occupants || '-'}</td>
                   <td>
-                    {room.status === 'Occupied' ? (
-                      <button className="action-btn view-btn">View Details</button>
-                    ) : (
-                      <button className="action-btn assign-btn">Assign</button>
-                    )}
+                    <div className="action-buttons">
+                      {room.status === 'Occupied' ? (
+                        <button className="action-btn view-btn">View Details</button>
+                      ) : (
+                        <button className="action-btn assign-btn">Assign</button>
+                      )}
+                      <button 
+                        className="action-btn edit-btn" 
+                        onClick={() => handleEditRoom(room.roomNumber)}
+                      >
+                        Edit
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

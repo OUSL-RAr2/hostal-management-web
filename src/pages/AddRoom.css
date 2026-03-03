@@ -1,0 +1,104 @@
+
+.add-room {
+    width: 100%;
+    max-width: 500px;
+    height: 90vh;   
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    padding: 25px;
+    overflow-y: auto;
+    margin-left: 25%;
+    align-self: center;
+}
+
+.add-room::-webkit-scrollbar {
+    width: 8px;
+}
+
+.add-room::-webkit-scrollbar-thumb {
+    background-color: #4e73df;
+    border-radius: 10px;
+}
+
+.add-room h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.add-room-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.add-room-form label {
+    margin-top: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #555;
+}
+
+.add-room-form input[type="text"],
+.add-room-form input[type="number"] {
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.add-room-form input:focus {
+    border-color: #4e73df;
+    outline: none;
+    box-shadow: 0 0 5px rgba(78, 115, 223, 0.5);
+}
+
+.add-room-form select {
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-room-form select:focus {
+    border-color: #4e73df;
+    outline: none;
+    box-shadow: 0 0 5px rgba(78, 115, 223, 0.5);
+}
+
+.add-room-form button {
+    margin-top: 25px;
+    padding: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-room-form button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.add-room-form button:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+    .add-room {
+        margin-left: 0;
+        max-width: 100%;
+        height: auto;
+        margin: 20px;
+    }
+}

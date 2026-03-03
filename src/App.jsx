@@ -6,6 +6,7 @@ import './App.css';
 import StudentManagement from './pages/StudentManagement';
 import ComplaintsManagement from './pages/ComplaintsManagement';
 import RegisterStudent from './pages/RegisterStudent';
+import AddRoom from './pages/AddRoom';
 
 function App() {
   const [activeMenu, setActiveMenu] = useState('Dashboard');
@@ -16,7 +17,7 @@ function App() {
       case 'Dashboard':
         return <Dashboard />;
       case 'Room Management':
-        return <RoomManagement />;
+        return <RoomManagement setActiveMenu={setActiveMenu} />;
       case 'Students':
         return <StudentManagement setActiveMenu={setActiveMenu} />;
       case 'Complaints':
@@ -29,6 +30,8 @@ function App() {
         return <div className="coming-soon">Settings Page - Coming Soon</div>;
       case 'Register Student':
         return <RegisterStudent />;
+      case 'Add Room':
+        return <AddRoom />;
       default:
         return <Dashboard />;
     }

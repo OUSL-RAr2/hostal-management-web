@@ -11,6 +11,9 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   padding: 24px;
   margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .room-header h1 {
@@ -178,6 +181,12 @@
   transition: all 0.3s ease;
 }
 
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .view-btn {
   background-color: #8b5cf6;
   color: white;
@@ -195,6 +204,40 @@
 }
 
 .assign-btn:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.edit-btn {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.edit-btn:hover {
+  background-color: #d97706;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.add-room-container {
+  display: flex;
+  align-items: center;
+}
+
+.add-room-btn {
+  padding: 12px 24px;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.add-room-btn:hover {
   background-color: #059669;
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
