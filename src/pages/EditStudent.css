@@ -14,7 +14,7 @@
     padding: 20px;
 }
 
-.register-student {
+.edit-student {
     position: relative;
     width: 100%;
     max-width: 500px;
@@ -27,11 +27,11 @@
     margin: 0 auto;
 }
 
-.register-student::-webkit-scrollbar {
+.edit-student::-webkit-scrollbar {
     width: 8px;
 }
 
-.register-student::-webkit-scrollbar-thumb {
+.edit-student::-webkit-scrollbar-thumb {
     background-color: #4e73df;
     border-radius: 10px;
 }
@@ -60,34 +60,34 @@
     color: #333;
 }
 
-.register-student h1 {
+.edit-student h1 {
     text-align: center;
     margin-bottom: 20px;
     color: #333;
     padding-right: 30px;
 }
 
-.register-form {
+.edit-form {
     display: flex;
     flex-direction: column;
 }
 
-.register-form label {
+.edit-form label {
     margin-top: 12px;
     font-weight: 600;
     font-size: 14px;
     color: #555;
 }
 
-.register-form label .required {
+.edit-form label .required {
     color: red;
     margin-left: 4px;
 }
 
-.register-form input[type="text"],
-.register-form input[type="number"],
-.register-form input[type="email"],
-.register-form input[type="password"] {
+.edit-form input[type="text"],
+.edit-form input[type="number"],
+.edit-form input[type="email"],
+.edit-form select {
     padding: 10px;
     margin-top: 5px;
     border-radius: 6px;
@@ -96,34 +96,25 @@
     transition: all 0.3s ease;
 }
 
+.edit-form input:disabled {
+    background-color: #f0f0f0;
+    cursor: not-allowed;
+    color: #888;
+}
 
-.register-form input:focus {
+.edit-form input:focus,
+.edit-form select:focus {
     border-color: #4e73df;
     outline: none;
     box-shadow: 0 0 5px rgba(78, 115, 223, 0.5);
 }
 
-
-.register-form select {
-    padding: 10px;
-    margin-top: 5px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 14px;
+.edit-form select {
     background-color: #fff;
     cursor: pointer;
-    transition: all 0.3s ease;
 }
 
-
-.register-form select:focus {
-    border-color: #4e73df;
-    outline: none;
-    box-shadow: 0 0 5px rgba(78, 115, 223, 0.5);
-}
-
-
-.register-form button {
+.edit-form button {
     margin-top: 20px;
     padding: 12px;
     border: none;
@@ -136,17 +127,22 @@
     transition: 0.3s ease;
 }
 
-
-.register-form button:hover {
+.edit-form button:hover:not(:disabled) {
     background-color: #2e59d9;
     transform: translateY(-2px);
 }
 
+.edit-form button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
 
-@media (max-width: 600px) {
-    .register-student {
-        width: 90%;
-        height: 95vh;
-        padding: 15px;
-    }
+.error-message {
+    background-color: #fee;
+    color: #e74a3b;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    text-align: center;
 }

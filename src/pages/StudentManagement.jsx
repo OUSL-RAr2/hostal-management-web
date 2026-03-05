@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import './StudentManagement.css';
+import RegisterStudent from './RegisterStudent';
+import ViewStudent from './ViewStudent';
+import EditStudent from './EditStudent';
 
 
 const StudentManagement = ({ setActiveMenu }) => {
@@ -8,6 +11,10 @@ const StudentManagement = ({ setActiveMenu }) => {
   const [studentsData, setStudentsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
 
   // Fetch students data when component mounts
   useEffect(() => {
@@ -91,6 +98,18 @@ const StudentManagement = ({ setActiveMenu }) => {
     }
   };
 
+  // Handle view student
+  const handleViewStudent = (studentId) => {
+    setSelectedStudentId(studentId);
+    setIsViewModalOpen(true);
+  };
+
+  // Handle edit student
+  const handleEditStudent = (studentId) => {
+    setSelectedStudentId(studentId);
+    setIsEditModalOpen(true);
+  };
+
   return (
     <div className="student-management">
       {/* Header */}
@@ -100,7 +119,7 @@ const StudentManagement = ({ setActiveMenu }) => {
           <p>Manage student registrations and profiles</p>
         </div>
         <div className="add-student-container">
-          <button className="add-student-btn" onClick={() => setActiveMenu('Register Student')}>Add New Student</button>
+          <button className="add-student-btn" onClick={() => setIsModalOpen(true)}>Add New Student</button>
         </div>
         
       </div>
@@ -171,8 +190,18 @@ const StudentManagement = ({ setActiveMenu }) => {
                       <td>{student.checkOut}</td>
                       <td>
                         <div className="action-buttons">
-                          <button className="action-btn view-btn">View</button>
-                          <button className="action-btn edit-btn">Edit</button>
+                          <button 
+                            className="action-btn view-btn"
+                            onClick={() => handleViewStudent(student.uid)}
+                          >
+                            View
+                          </button>
+                          <button 
+                            className="action-btn edit-btn"
+                            onClick={() => handleEditStudent(student.uid)}
+                          >
+                            Edit
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -184,6 +213,33 @@ const StudentManagement = ({ setActiveMenu }) => {
         )}
       </div>
 
+      {/* Register Student Modal */}
+      <RegisterStudent 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={() => {
+          setIsModalOpen(false);
+          fetchStudents(); // Refresh the student list
+        }}
+      />
+
+      {/* View Student Modal */}
+      <ViewStudent 
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        studentId={selectedStudentId}
+      />
+
+      {/* Edit Student Modal */}
+      <EditStudent 
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        studentId={selectedStudentId}
+        onSuccess={() => {
+          setIsEditModalOpen(false);
+          fetchStudents(); // Refresh the student list
+        }}
+      />
     </div>
   );
 };
