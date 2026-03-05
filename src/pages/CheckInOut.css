@@ -2,7 +2,7 @@
   flex: 1;
   overflow-y: auto;
   padding: 32px;
-  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 50%, #6366f1 100%);
+  background: var(--bg-gradient);
 }
 
 .checkinout-header {

@@ -55,7 +55,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   color: #374151;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 14px;
 }
 
@@ -64,9 +64,9 @@
 }
 
 .menu-item.active {
-  background-color: #8b5cf6;
+  background-color: #F66D14;
   color: white;
-  box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 6px rgba(246, 169, 92, 0.3);
 }
 
 .menu-item svg {
