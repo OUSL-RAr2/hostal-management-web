@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Clock, CheckCircle, User, Home } from 'lucide-react';
+import { AlertCircle, Clock, CheckCircle, User, Home, X, Send } from 'lucide-react';
 import './ComplaintsManagement.css';
 
 const ComplaintsManagement = () => {
@@ -12,12 +12,45 @@ const ComplaintsManagement = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState(''); // 'reply' or 'resolve'
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [responseText, setResponseText] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch complaints from API
   useEffect(() => {
     fetchComplaints();
     fetchStats();
   }, []);
+
+  // Handle modal keyboard events and body scroll
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (!showModal) return;
+      
+      if (e.key === 'Escape') {
+        closeModal();
+      } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !isSubmitting) {
+        e.preventDefault();
+        handleModalSubmit();
+      }
+    };
+
+    if (showModal) {
+      document.addEventListener('keydown', handleKeyPress);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+      document.body.style.overflow = 'unset';
+    };
+  }, [showModal, isSubmitting]);
 
   const fetchComplaints = async () => {
     try {
@@ -116,22 +149,62 @@ const ComplaintsManagement = () => {
     }
   };
 
-  const handleResolve = (complaintId) => {
-    const response = prompt('Enter resolution notes (optional):');
-    if (response !== null) {
-      updateComplaintStatus(complaintId, 'resolved', response || 'Complaint resolved');
-    }
+  const handleResolve = (complaint) => {
+    setSelectedComplaint(complaint);
+    setModalType('resolve');
+    setResponseText('');
+    setShowModal(true);
   };
 
   const handleInvestigate = (complaintId) => {
     updateComplaintStatus(complaintId, 'in_progress');
   };
 
-  const handleReply = (complaintId) => {
-    const response = prompt('Enter your response:');
-    if (response) {
-      updateComplaintStatus(complaintId, 'in_progress', response);
+  const handleReply = (complaint) => {
+    setSelectedComplaint(complaint);
+    setModalType('reply');
+    setResponseText('');
+    setShowModal(true);
+  };
+
+  const handleModalSubmit = async () => {
+    if (!selectedComplaint) return;
+    
+    if (modalType === 'reply' && !responseText.trim()) {
+      alert('Please enter a response');
+      return;
     }
+    
+    setIsSubmitting(true);
+    
+    try {
+      if (modalType === 'resolve') {
+        await updateComplaintStatus(
+          selectedComplaint.ComplaintID, 
+          'resolved', 
+          responseText.trim() || 'Complaint resolved'
+        );
+      } else if (modalType === 'reply') {
+        await updateComplaintStatus(
+          selectedComplaint.ComplaintID, 
+          'in_progress', 
+          responseText.trim()
+        );
+      }
+      closeModal();
+    } catch (error) {
+      console.error('Error submitting response:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const closeModal = () => {
+    if (isSubmitting) return; // Prevent closing while submitting
+    setShowModal(false);
+    setModalType('');
+    setSelectedComplaint(null);
+    setResponseText('');
   };
 
   const statsDisplay = [
@@ -282,13 +355,13 @@ const ComplaintsManagement = () => {
                     <>
                       <button
                         className="action-btn-modern reply-btn-modern"
-                        onClick={() => handleReply(complaint.ComplaintID)}
+                        onClick={() => handleReply(complaint)}
                       >
                         Reply
                       </button>
                       <button
                         className="action-btn-modern resolve-btn-modern"
-                        onClick={() => handleResolve(complaint.ComplaintID)}
+                        onClick={() => handleResolve(complaint)}
                       >
                         Resolve
                       </button>
@@ -300,6 +373,96 @@ const ComplaintsManagement = () => {
           )}
         </div>
       </div>
+
+      {/* Admin Response Modal */}
+      {showModal && (
+        <div 
+          className="modal-overlay" 
+          onClick={closeModal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+        >
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 id="modal-title">
+                {modalType === 'resolve' ? '✅ Resolve Complaint' : '💬 Reply to Complaint'}
+              </h2>
+              <button 
+                className="modal-close-btn" 
+                onClick={closeModal}
+                aria-label="Close modal"
+                disabled={isSubmitting}
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            {selectedComplaint && (
+              <div className="modal-complaint-info">
+                <h3>{selectedComplaint.Title}</h3>
+                <p className="modal-complaint-desc">{selectedComplaint.Description}</p>
+                <div className="modal-complaint-meta">
+                  <span>📋 #{selectedComplaint.ComplaintID.slice(0, 8)}</span>
+                  <span>👤 {selectedComplaint.User?.Username || 'Anonymous'}</span>
+                  <span>🏠 Room {selectedComplaint.Room?.RoomNumber || 'N/A'}</span>
+                </div>
+              </div>
+            )}
+            
+            <div className="modal-body">
+              <label htmlFor="admin-response">
+                {modalType === 'resolve' 
+                  ? 'Resolution Notes (Optional)' 
+                  : 'Your Response *'}
+              </label>
+              <textarea
+                id="admin-response"
+                className="modal-textarea"
+                placeholder={
+                  modalType === 'resolve'
+                    ? 'Enter notes about how this complaint was resolved...'
+                    : 'Enter your response to the student...'
+                }
+                value={responseText}
+                onChange={(e) => setResponseText(e.target.value)}
+                rows={6}
+                autoFocus
+                disabled={isSubmitting}
+                aria-required={modalType === 'reply'}
+              />
+              <p className="keyboard-hint">💡 Tip: Press Ctrl+Enter to submit quickly</p>
+            </div>
+            
+            <div className="modal-footer">
+              <button 
+                className="modal-btn modal-cancel-btn" 
+                onClick={closeModal}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button 
+                className="modal-btn modal-submit-btn" 
+                onClick={handleModalSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner"></span>
+                    {modalType === 'resolve' ? 'Resolving...' : 'Sending...'}
+                  </>
+                ) : (
+                  <>
+                    <Send size={18} />
+                    {modalType === 'resolve' ? 'Mark as Resolved' : 'Send Reply'}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
