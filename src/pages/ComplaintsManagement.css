@@ -320,6 +320,22 @@
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
 }
 
+.admin-response {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #f0fdf4;
+  border-left: 3px solid #10b981;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #065f46;
+}
+
+.admin-response strong {
+  color: #047857;
+  display: block;
+  margin-bottom: 4px;
+}
+
 @media (max-width: 1024px) {
   .complaints-grid {
     grid-template-columns: 1fr;
