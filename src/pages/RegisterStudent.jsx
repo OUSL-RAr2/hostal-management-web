@@ -1,9 +1,7 @@
 import React from "react";
 import './RegisterStudent.css'
 
-const RegisterStudent = ({ isOpen, onClose, onSuccess }) => {
-    // Don't render if not open
-    if (!isOpen) return null;
+const RegisterStudent = () => {
 
     const [formData, setFormData] = React.useState({
         nic: '',
@@ -20,21 +18,10 @@ const RegisterStudent = ({ isOpen, onClose, onSuccess }) => {
     });
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        
-        // Auto-generate password when NIC is entered
-        if (name === 'nic') {
-            setFormData({
-                ...formData,
-                [name]: value,
-                password: 'U' + value
-            });
-        } else {
-            setFormData({
-                ...formData,
-                [name]: value
-            });
-        }
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
     };
 
     const handleSubmit = async (e) => {
@@ -75,8 +62,6 @@ const RegisterStudent = ({ isOpen, onClose, onSuccess }) => {
                     password: '',
                     role: 'user'
                 });
-                // Call success callback to close modal and refresh
-                if (onSuccess) onSuccess();
             } else {
                 alert(`Failed to register student: ${data.message || data || 'Unknown error'}`);
             }
@@ -86,61 +71,48 @@ const RegisterStudent = ({ isOpen, onClose, onSuccess }) => {
     };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="register-student" onClick={(e) => e.stopPropagation()}>
-        <button className="close-modal-btn" onClick={onClose}>&times;</button>
+    <div className="register-student">
         <h1>Register New Student</h1>
         <form className="register-form" onSubmit={handleSubmit}>
 
-            <label htmlFor="nic">NIC:<span className="required">*</span></label>
+            <label htmlFor="nic">NIC:</label>
             <input type="text" id="nic" name="nic" required onChange={handleChange} value={formData.nic}/>
 
-            <label htmlFor="username">User Name:<span className="required">*</span></label>
+            <label htmlFor="username">User Name:</label>
             <input type="text" id="username" name="username" required onChange={handleChange} value={formData.username} />
 
-            <label htmlFor="registration_number">Registration Number:<span className="required">*</span></label>
+            <label htmlFor="registration_number">Registration Number:</label>
             <input type="number" id="registration_number" name="registration_number" required onChange={handleChange} value={formData.registration_number} />
 
-            <label htmlFor="center">Center:<span className="required">*</span></label>
-            <select id="center" name="center" required onChange={handleChange} value={formData.center}>
-                <option value="">Select Center</option>
-                <option value="Colombo">Colombo</option>
-                <option value="Kandy">Kandy</option>
-                <option value="Matara">Matara</option>
-                <option value="Jaffna">Jaffna</option>
-                <option value="Anuradhapura">Anuradhapura</option>
-                <option value="Batticaloa">Batticaloa</option>
-                <option value="Kurunegala">Kurunegala</option>
-                <option value="Badulla">Badulla</option>
-                <option value="Ratnapura">Ratnapura</option>
-            </select>
+            <label htmlFor="center">Center:</label>
+            <input type="text" id="center" name="center" required onChange={handleChange} value={formData.center} />
 
-            <label htmlFor="distance_from_home">Distance From Home (KM):<span className="required">*</span></label>
+            <label htmlFor="distance_from_home">Distance From Home:</label>
             <input type="number" id="distance_from_home" name="distance_from_home" required onChange={handleChange} value={formData.distance_from_home} />
 
-            <label htmlFor="faculty">Faculty:<span className="required">*</span></label>
-            <select id="faculty" name="faculty" required onChange={handleChange} value={formData.faculty}>
-                <option value="">Select Faculty</option>
-                <option value="Education">Education</option>
-                <option value="Engineering Technology">Engineering Technology</option>
-                <option value="Health Sciences">Health Sciences</option>
-                <option value="Humanities & Social Sciences">Humanities & Social Sciences</option>
-                <option value="Management Studies">Management Studies</option>
-                <option value="Natural Sciences">Natural Sciences</option>
-            </select>
+            <label htmlFor="faculty">Faculty:</label>
+            <input type="text" id="faculty" name="faculty" required onChange={handleChange} value={formData.faculty} />
 
-            <label htmlFor="contact_number">Contact Number:<span className="required">*</span></label>
+            <label htmlFor="contact_number">Contact Number:</label>
             <input type="text" id="contact_number" name="contact_number" required onChange={handleChange} value={formData.contact_number} />
 
-            <label htmlFor="emergency_contact">Emergency Contact:<span className="required">*</span></label>
+            <label htmlFor="emergency_contact">Emergency Contact:</label>
             <input type="text" id="emergency_contact" name="emergency_contact" required onChange={handleChange} value={formData.emergency_contact} />
 
             <label htmlFor="email">Email:</label>
             <input type="email" id="email" name="email" onChange={handleChange} value={formData.email} />
 
+            <label htmlFor="Password">Password:</label>
+            <input type="password" id="password" name="password" required onChange={handleChange} value={formData.password} />
+
+            <label htmlFor="role">Role:</label>
+            <select id="role" name="role" required onChange={handleChange} value={formData.role}>
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+            </select>
+
             <button type="submit">Register</button>
         </form>
-      </div>
     </div>
   );
 }
