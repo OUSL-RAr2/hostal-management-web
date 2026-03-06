@@ -138,8 +138,8 @@
 }
 
 .tab-btn.active {
-  color: #8b5cf6;
-  background-color: #f3e8ff;
+  color: #F66D14;
+  background-color: #fff4e6;
 }
 
 .tab-btn.active::after {
@@ -149,7 +149,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background-color: #8b5cf6;
+  background-color: #F66D14;
 }
 
 /* Search */
@@ -177,8 +177,8 @@
 }
 
 .search-input:focus {
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  border-color: #F66D14;
+  box-shadow: 0 0 0 3px rgba(255, 140, 90, 0.1);
 }
 
 /* Student List */
@@ -214,7 +214,7 @@
 }
 
 .student-card:hover {
-  border-color: #8b5cf6;
+  border-color: #F66D14;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
