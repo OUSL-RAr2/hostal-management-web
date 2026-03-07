@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { AlertCircle, Clock, CheckCircle, User, Home } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { AlertCircle, Clock, CheckCircle, User, Home, X, Send, Wifi, WifiOff } from 'lucide-react';
+import io from 'socket.io-client';
 import './ComplaintsManagement.css';
 
 const ComplaintsManagement = () => {
@@ -12,11 +13,183 @@ const ComplaintsManagement = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState(''); // 'reply' or 'resolve'
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [responseText, setResponseText] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Real-time sync state
+  const [isConnected, setIsConnected] = useState(false);
+  const socketRef = useRef(null);
+  const pollingIntervalRef = useRef(null);
+  const AUTO_REFRESH_INTERVAL = 30000; // 30 seconds (fallback)
+  
+  // Toast notification state
+  const [toast, setToast] = useState({ show: false, message: '', type: '' });
+  const toastTimeoutRef = useRef(null);
 
-  // Fetch complaints from API
+  // Fetch complaints from API (initial load)
   useEffect(() => {
     fetchComplaints();
     fetchStats();
+  }, []);
+
+  // WebSocket real-time connection
+  useEffect(() => {
+    // Initialize Socket.IO connection
+    const socket = io('http://localhost:5000', {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5
+    });
+
+    socketRef.current = socket;
+
+    // Connection events
+    socket.on('connect', () => {
+      console.log('✅ WebSocket connected');
+      setIsConnected(true);
+      showToast('Connected to real-time server', 'success');
+    });
+
+    socket.on('disconnect', () => {
+      console.log('❌ WebSocket disconnected');
+      setIsConnected(false);
+      showToast('Lost connection to server', 'error');
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('WebSocket connection error:', error);
+      setIsConnected(false);
+    });
+
+    // Real-time complaint events
+    socket.on('complaint:created', (newComplaint) => {
+      console.log('🆕 New complaint received:', newComplaint);
+      setComplaints(prev => [newComplaint, ...prev]);
+      refreshStats();
+      showToast('New complaint received', 'success');
+    });
+
+    socket.on('complaint:updated', (updatedComplaint) => {
+      console.log('🔄 Complaint updated:', updatedComplaint);
+      setComplaints(prev => 
+        prev.map(c => 
+          c.ComplaintID === updatedComplaint.ComplaintID ? updatedComplaint : c
+        )
+      );
+      refreshStats();
+    });
+
+    // Cleanup on unmount
+    return () => {
+      socket.disconnect();
+      console.log('WebSocket disconnected (cleanup)');
+    };
+  }, []);
+
+  // Fallback polling (in case WebSocket fails) - less frequent
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Stop polling when tab is hidden
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+      } else {
+        // Resume polling when tab becomes visible (only if not connected via WebSocket)
+        if (!showModal && !isConnected) {
+          refreshData();
+          startPolling();
+        }
+      }
+    };
+
+    const startPolling = () => {
+      // Clear any existing interval
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+      
+      // Only poll if WebSocket is not connected
+      if (!isConnected) {
+        pollingIntervalRef.current = setInterval(() => {
+          if (!document.hidden && !showModal && !isConnected) {
+            refreshData();
+          }
+        }, AUTO_REFRESH_INTERVAL);
+      }
+    };
+
+    // Add visibility change listener
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Start fallback polling if WebSocket not connected
+    if (!isConnected && !document.hidden) {
+      startPolling();
+    }
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, [showModal, isConnected]);
+
+  // Handle modal keyboard events and body scroll
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (!showModal) return;
+      
+      if (e.key === 'Escape') {
+        closeModal();
+      } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !isSubmitting) {
+        e.preventDefault();
+        handleModalSubmit();
+      }
+    };
+
+    if (showModal) {
+      document.addEventListener('keydown', handleKeyPress);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+      document.body.style.overflow = 'unset';
+    };
+  }, [showModal, isSubmitting]);
+
+  // Toast notification helper
+  const showToast = useCallback((message, type = 'success') => {
+    // Clear existing timeout
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    
+    setToast({ show: true, message, type });
+    
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast({ show: false, message: '', type: '' });
+    }, 3000);
+  }, []);
+
+  // Refresh data (silent background sync)
+  const refreshData = useCallback(async () => {
+    try {
+      await Promise.all([fetchComplaintsQuiet(), fetchStatsQuiet()]);
+    } catch (err) {
+      console.error('Error refreshing data:', err);
+    }
   }, []);
 
   const fetchComplaints = async () => {
@@ -46,6 +219,28 @@ const ComplaintsManagement = () => {
     }
   };
 
+  // Quiet fetch without loading state (for background sync)
+  const fetchComplaintsQuiet = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/complaints', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setComplaints(data.data);
+        setError(null);
+      }
+    } catch (err) {
+      console.error('Error fetching complaints (quiet):', err);
+    }
+  };
+
   const fetchStats = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/complaints/stats', {
@@ -63,6 +258,47 @@ const ComplaintsManagement = () => {
       }
     } catch (err) {
       console.error('Error fetching stats:', err);
+    }
+  };
+
+  // Quiet fetch stats without loading state
+  const fetchStatsQuiet = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/complaints/stats', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setStats(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching stats (quiet):', err);
+    }
+  };
+
+  // Refresh stats only (for WebSocket updates)
+  const refreshStats = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/complaints/stats', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setStats(data.data);
+      }
+    } catch (err) {
+      console.error('Error refreshing stats:', err);
     }
   };
 
@@ -103,35 +339,74 @@ const ComplaintsManagement = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // Refresh complaints and stats
-        fetchComplaints();
-        fetchStats();
-        alert('Complaint status updated successfully');
+        // Immediate refresh after update to sync all clients
+        await refreshData();
+        showToast('Complaint status updated successfully', 'success');
       } else {
-        alert(data.message || 'Failed to update complaint status');
+        showToast(data.message || 'Failed to update complaint status', 'error');
       }
     } catch (err) {
       console.error('Error updating complaint:', err);
-      alert('Failed to connect to server');
+      showToast('Failed to connect to server', 'error');
     }
   };
 
-  const handleResolve = (complaintId) => {
-    const response = prompt('Enter resolution notes (optional):');
-    if (response !== null) {
-      updateComplaintStatus(complaintId, 'resolved', response || 'Complaint resolved');
+  const handleResolve = (complaint) => {
+    setSelectedComplaint(complaint);
+    setModalType('resolve');
+    setResponseText('');
+    setShowModal(true);
+  };
+
+  const handleInvestigate = async (complaintId) => {
+    await updateComplaintStatus(complaintId, 'in_progress');
+  };
+
+  const handleReply = (complaint) => {
+    setSelectedComplaint(complaint);
+    setModalType('reply');
+    setResponseText('');
+    setShowModal(true);
+  };
+
+  const handleModalSubmit = async () => {
+    if (!selectedComplaint) return;
+    
+    if (modalType === 'reply' && !responseText.trim()) {
+      showToast('Please enter a response', 'error');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      if (modalType === 'resolve') {
+        await updateComplaintStatus(
+          selectedComplaint.ComplaintID, 
+          'resolved', 
+          responseText.trim() || 'Complaint resolved'
+        );
+      } else if (modalType === 'reply') {
+        await updateComplaintStatus(
+          selectedComplaint.ComplaintID, 
+          'in_progress', 
+          responseText.trim()
+        );
+      }
+      closeModal();
+    } catch (error) {
+      console.error('Error submitting response:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleInvestigate = (complaintId) => {
-    updateComplaintStatus(complaintId, 'in_progress');
-  };
-
-  const handleReply = (complaintId) => {
-    const response = prompt('Enter your response:');
-    if (response) {
-      updateComplaintStatus(complaintId, 'in_progress', response);
-    }
+  const closeModal = () => {
+    if (isSubmitting) return; // Prevent closing while submitting
+    setShowModal(false);
+    setModalType('');
+    setSelectedComplaint(null);
+    setResponseText('');
   };
 
   const statsDisplay = [
@@ -181,6 +456,21 @@ const ComplaintsManagement = () => {
         <div>
           <h1>Complaints Management</h1>
           <p>Handle student complaints and feedback</p>
+        </div>
+        <div className="header-actions">
+          <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
+            {isConnected ? (
+              <>
+                <Wifi size={16} />
+                <span>Live</span>
+              </>
+            ) : (
+              <>
+                <WifiOff size={16} />
+                <span>Offline</span>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -282,13 +572,13 @@ const ComplaintsManagement = () => {
                     <>
                       <button
                         className="action-btn-modern reply-btn-modern"
-                        onClick={() => handleReply(complaint.ComplaintID)}
+                        onClick={() => handleReply(complaint)}
                       >
                         Reply
                       </button>
                       <button
                         className="action-btn-modern resolve-btn-modern"
-                        onClick={() => handleResolve(complaint.ComplaintID)}
+                        onClick={() => handleResolve(complaint)}
                       >
                         Resolve
                       </button>
@@ -300,6 +590,106 @@ const ComplaintsManagement = () => {
           )}
         </div>
       </div>
+
+      {/* Admin Response Modal */}
+      {showModal && (
+        <div 
+          className="modal-overlay" 
+          onClick={closeModal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+        >
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 id="modal-title">
+                {modalType === 'resolve' ? '✅ Resolve Complaint' : '💬 Reply to Complaint'}
+              </h2>
+              <button 
+                className="modal-close-btn" 
+                onClick={closeModal}
+                aria-label="Close modal"
+                disabled={isSubmitting}
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            {selectedComplaint && (
+              <div className="modal-complaint-info">
+                <h3>{selectedComplaint.Title}</h3>
+                <p className="modal-complaint-desc">{selectedComplaint.Description}</p>
+                <div className="modal-complaint-meta">
+                  <span>📋 #{selectedComplaint.ComplaintID.slice(0, 8)}</span>
+                  <span>👤 {selectedComplaint.User?.Username || 'Anonymous'}</span>
+                  <span>🏠 Room {selectedComplaint.Room?.RoomNumber || 'N/A'}</span>
+                </div>
+              </div>
+            )}
+            
+            <div className="modal-body">
+              <label htmlFor="admin-response">
+                {modalType === 'resolve' 
+                  ? 'Resolution Notes (Optional)' 
+                  : 'Your Response *'}
+              </label>
+              <textarea
+                id="admin-response"
+                className="modal-textarea"
+                placeholder={
+                  modalType === 'resolve'
+                    ? 'Enter notes about how this complaint was resolved...'
+                    : 'Enter your response to the student...'
+                }
+                value={responseText}
+                onChange={(e) => setResponseText(e.target.value)}
+                rows={6}
+                autoFocus
+                disabled={isSubmitting}
+                aria-required={modalType === 'reply'}
+              />
+              <p className="keyboard-hint">💡 Tip: Press Ctrl+Enter to submit quickly</p>
+            </div>
+            
+            <div className="modal-footer">
+              <button 
+                className="modal-btn modal-cancel-btn" 
+                onClick={closeModal}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button 
+                className="modal-btn modal-submit-btn" 
+                onClick={handleModalSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner"></span>
+                    {modalType === 'resolve' ? 'Resolving...' : 'Sending...'}
+                  </>
+                ) : (
+                  <>
+                    <Send size={18} />
+                    {modalType === 'resolve' ? 'Mark as Resolved' : 'Send Reply'}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`toast toast-${toast.type}`}>
+          <div className="toast-icon">
+            {toast.type === 'success' ? '✓' : '✕'}
+          </div>
+          <span className="toast-message">{toast.message}</span>
+        </div>
+      )}
     </div>
   );
 };
