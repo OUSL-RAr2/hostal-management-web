@@ -1,24 +1,26 @@
 /* Report Page Styles */
 .report-container {
-  padding: 20px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  min-height: 100vh;
+  padding: 32px;
+  background: var(--bg-gradient);
+  flex: 1;
+  overflow-y: auto;
 }
 
 /* Header Styles */
 .report-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  padding: 30px;
-  margin-bottom: 30px;
-  color: white;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  margin-bottom: 24px;
+  
 }
 
 .report-title-section {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+  font-size: 28px;
+  font-weight: bold;
+  color: #1f2937;
+  margin: 0 0 4px 0;
 }
 
 .report-icon {
