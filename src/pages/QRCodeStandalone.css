@@ -39,6 +39,35 @@
   text-align: right;
 }
 
+/* Right-side header cluster (badge + time) */
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* WebSocket live badge */
+.ws-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ws-status-badge.ws-on {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.ws-status-badge.ws-off {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
 .current-date {
   font-size: 13px;
   color: #7f8c8d;

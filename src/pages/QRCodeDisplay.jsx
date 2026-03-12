@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { QrCode, RefreshCw, MapPin, Clock, Users } from 'lucide-react';
+import { io } from 'socket.io-client';
 import { API_CONFIG, buildUrl } from '../config/api.config';
 import './QRCodeDisplay.css';
 
@@ -12,6 +13,8 @@ const QRCodeDisplay = () => {
   const [error, setError] = useState({ boys: null, girls: null });
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [statistics, setStatistics] = useState(null);
+  const [socket, setSocket] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
 
   // Device configurations
   const devices = [
@@ -120,15 +123,103 @@ const QRCodeDisplay = () => {
     }
   };
 
+  // Auto-refresh statistics every 5 seconds
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(() => {
+      fetchStatistics();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [autoRefresh]);
+
   // Initialize - load existing QR codes or generate new ones
   useEffect(() => {
     devices.forEach(device => {
       getActiveQRCode(device.id, device.key);
     });
     fetchStatistics();
+
+    // Initialize WebSocket connection
+    const socketConnection = io(API_CONFIG.BASE_URL, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5
+    });
+
+    socketConnection.on('connect', () => {
+      console.log('✅ WebSocket connected:', socketConnection.id);
+      setIsConnected(true);
+    });
+
+    socketConnection.on('disconnect', () => {
+      console.log('❌ WebSocket disconnected');
+      setIsConnected(false);
+    });
+
+    socketConnection.on('connect_error', (error) => {
+      console.error('WebSocket connection error:', error);
+    });
+
+    // Listen for QR code refresh event with new QR code data
+    socketConnection.on('qr-refresh', (data) => {
+      console.log('🔄 QR Code refresh event received:', data);
+      
+      // Find the matching device
+      const matchedDevice = devices.find(d => d.id === data.deviceId);
+      
+      if (matchedDevice && data.newQrCode) {
+        console.log(`✨ Instantly updating QR for ${matchedDevice.location} (scanned by ${data.username})`);
+        console.log('New QR Code data:', data.newQrCode);
+        
+        // Directly update the QR code state with the new data
+        setQrCodes(prev => {
+          const updated = {
+            ...prev,
+            [matchedDevice.key]: {
+              ...data.newQrCode,
+              generatedAt: new Date(data.newQrCode.generatedAt || Date.now())
+            }
+          };
+          console.log('Updated QR codes state:', updated);
+          return updated;
+        });
+        
+        fetchStatistics(); // Also refresh statistics
+      } else {
+        console.warn('No matching device found or missing QR data:', { deviceId: data.deviceId, hasNewQrCode: !!data.newQrCode });
+      }
+    });
+
+    // Listen for QR code generated event
+    socketConnection.on('qr-generated', (data) => {
+      console.log('📱 QR Code generated:', data);
+    });
+
+    setSocket(socketConnection);
+
+    // Cleanup on unmount
+    return () => {
+      if (socketConnection) {
+        socketConnection.disconnect();
+      }
+    };
   }, []);
 
-  // Auto-refresh QR codes when they expire
+  // Auto-refresh statistics every 5 seconds
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(() => {
+      fetchStatistics();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [autoRefresh]);
+
+  // Auto-refresh QR codes when they expire (WebSocket handles scan events)
   useEffect(() => {
     if (!autoRefresh) return;
 
@@ -141,6 +232,7 @@ const QRCodeDisplay = () => {
           
           // Refresh 10 seconds before expiry or if already expired
           if (expiryTime - now < 10000) {
+            console.log(`QR code for ${device.location} expiring soon, refreshing...`);
             generateQRCode(device.id, device.location, device.key);
           }
         }
@@ -173,6 +265,26 @@ const QRCodeDisplay = () => {
           <p>Display QR codes for student check-in and check-out</p>
         </div>
         <div className="qr-header-actions">
+          <div className="connection-status" style={{ 
+            marginRight: '20px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            backgroundColor: isConnected ? '#e8f5e9' : '#ffebee',
+            color: isConnected ? '#2e7d32' : '#c62828',
+            fontSize: '14px',
+            fontWeight: '600'
+          }}>
+            <span style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: isConnected ? '#4caf50' : '#f44336'
+            }}></span>
+            {isConnected ? 'WebSocket Connected' : 'WebSocket Disconnected'}
+          </div>
           <label className="auto-refresh-toggle">
             <input
               type="checkbox"

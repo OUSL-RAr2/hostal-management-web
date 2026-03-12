@@ -8,10 +8,11 @@ import StudentManagement from './pages/StudentManagement';
 import ComplaintsManagement from './pages/ComplaintsManagement';
 import Settings from './pages/Settings';
 import CheckInOut from './pages/CkeckInOut';
-import QRCodeDisplay from './pages/QRCodeDisplay';
 import QRCodeStandalone from './pages/QRCodeStandalone';
 import RegisterStudent from './pages/RegisterStudent';
 import AddRoom from './pages/AddRoom';
+import ViewStudent from './pages/ViewStudent';
+import EditStudent from './pages/EditStudent';
 
 // Main App with Sidebar
 function MainApp() {
@@ -38,6 +39,10 @@ function MainApp() {
         return <RegisterStudent />;
       case 'Add Room':
         return <AddRoom />;
+      case 'View Student':
+        return <ViewStudent />;
+      case 'Edit Student':
+        return <EditStudent />;
       default:
         return <Dashboard />;
       
@@ -56,12 +61,9 @@ function MainApp() {
 function App() {
   return (
     <Routes>
-      {/* Standalone QR Code Pages - No Sidebar */}
-      <Route path="/qr/boys" element={<QRCodeStandalone hostelType="boys" />} />
+      <Route path="/" element={<MainApp />} />
+      <Route path="/qr/boys"  element={<QRCodeStandalone hostelType="boys"  />} />
       <Route path="/qr/girls" element={<QRCodeStandalone hostelType="girls" />} />
-      <Route path="/qr" element={<QRCodeStandalone />} />
-      
-      {/* Main App with Sidebar - All other routes */}
       <Route path="/*" element={<MainApp />} />
     </Routes>
   );
