@@ -54,8 +54,12 @@ const Settings = () => {
   const handleLogout = () => {
     const confirmLogout = window.confirm('Are you sure you want to logout?');
     if (confirmLogout) {
+      // clear token & user data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       alert('Logged out successfully!');
-      // Add your logout logic here
+      // reload app to show login page
+      window.location.reload();
     }
   };
 
