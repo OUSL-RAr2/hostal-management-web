@@ -117,7 +117,6 @@ const Report = () => {
       {/* Header */}
       <div className="report-header">
         <div className="report-title-section">
-          <BarChart3 size={32} className="report-icon" />
           <div>
             <h1>Student Registration Reports</h1>
             <p>View daily, weekly, and monthly new student registrations</p>
