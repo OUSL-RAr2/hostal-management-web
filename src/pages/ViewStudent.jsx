@@ -1,21 +1,36 @@
 import React, { useState, useEffect } from "react";
 import './ViewStudent.css';
 
-const ViewStudent = ({ isOpen, onClose, studentId }) => {
+const ViewStudent = ({ isOpen, onClose, studentId, student }) => {
     const [studentData, setStudentData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (isOpen && studentId) {
+        if (isOpen && (studentId || student?.registrationNumber || student?.name)) {
             fetchStudentData();
         }
-    }, [isOpen, studentId]);
+    }, [isOpen, studentId, student]);
+
+    const parseApiResponse = async (response) => {
+        const raw = await response.text();
+        if (!raw) return {};
+
+        try {
+            return JSON.parse(raw);
+        } catch {
+            if (raw.trim().startsWith('<')) {
+                throw new Error('Server returned an HTML response. Check backend server state.');
+            }
+            throw new Error('Server returned invalid JSON.');
+        }
+    };
 
     const fetchStudentData = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`http://localhost:5000/api/users/${studentId}`, {
+            const query = student?.registrationNumber || student?.id || student?.name || studentId;
+            const response = await fetch(`http://localhost:5000/api/bookings/search-students?query=${encodeURIComponent(query)}`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
@@ -23,17 +38,24 @@ const ViewStudent = ({ isOpen, onClose, studentId }) => {
                 }
             });
 
-            const data = await response.json();
+            const data = await parseApiResponse(response);
 
             if (response.ok) {
-                setStudentData(data.data);
+                const list = Array.isArray(data.data) ? data.data : [];
+                const exactMatch = list.find((item) =>
+                    String(item?.UID || '') === String(studentId || '') ||
+                    String(item?.Registration_Number || '') === String(student?.registrationNumber || '') ||
+                    String(item?.NIC || '') === String(student?.id || '')
+                );
+
+                setStudentData(exactMatch || list[0] || null);
                 setError(null);
             } else {
                 setError(data.message || 'Failed to fetch student data');
             }
         } catch (err) {
             console.error('Error fetching student:', err);
-            setError('Failed to connect to server');
+            setError(err.message || 'Failed to connect to server');
         } finally {
             setLoading(false);
         }
@@ -83,7 +105,7 @@ const ViewStudent = ({ isOpen, onClose, studentId }) => {
                         </div>
                         <div className="detail-row">
                             <label>Contact Number:</label>
-                            <span>{studentData.Contact_number}</span>
+                            <span>{studentData.Contact_Number}</span>
                         </div>
                         <div className="detail-row">
                             <label>Emergency Contact:</label>

@@ -15,6 +15,7 @@ const StudentManagement = ({ setActiveMenu }) => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   const parseApiResponse = async (response) => {
     const raw = await response.text();
@@ -114,8 +115,9 @@ const StudentManagement = ({ setActiveMenu }) => {
   };
 
   // Handle view student
-  const handleViewStudent = (studentId) => {
-    setSelectedStudentId(studentId);
+  const handleViewStudent = (student) => {
+    setSelectedStudent(student);
+    setSelectedStudentId(student?.uid || null);
     setIsViewModalOpen(true);
   };
 
@@ -233,7 +235,7 @@ const StudentManagement = ({ setActiveMenu }) => {
                         <div className="action-buttons">
                           <button 
                             className="action-btn view-btn"
-                            onClick={() => handleViewStudent(student.uid)}
+                            onClick={() => handleViewStudent(student)}
                           >
                             View
                           </button>
@@ -275,6 +277,7 @@ const StudentManagement = ({ setActiveMenu }) => {
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
         studentId={selectedStudentId}
+        student={selectedStudent}
       />
 
       {/* Edit Student Modal */}

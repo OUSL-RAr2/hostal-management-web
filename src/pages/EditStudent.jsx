@@ -22,10 +22,24 @@ const EditStudent = ({ isOpen, onClose, studentId, onSuccess }) => {
         }
     }, [isOpen, studentId]);
 
+    const parseApiResponse = async (response) => {
+        const raw = await response.text();
+        if (!raw) return {};
+
+        try {
+            return JSON.parse(raw);
+        } catch {
+            if (raw.trim().startsWith('<')) {
+                throw new Error('Server returned an HTML response. Check backend API state.');
+            }
+            throw new Error('Server returned invalid JSON.');
+        }
+    };
+
     const fetchStudentData = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`http://localhost:5000/api/users/${studentId}`, {
+            const response = await fetch(`http://localhost:5000/api/users/panel/${studentId}`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
@@ -33,7 +47,7 @@ const EditStudent = ({ isOpen, onClose, studentId, onSuccess }) => {
                 }
             });
 
-            const data = await response.json();
+            const data = await parseApiResponse(response);
 
             if (response.ok) {
                 setFormData({
@@ -43,7 +57,7 @@ const EditStudent = ({ isOpen, onClose, studentId, onSuccess }) => {
                     center: data.data.Center,
                     distance_from_home: data.data.Distance_from_home,
                     faculty: data.data.Faculty,
-                    contact_number: data.data.Contact_number,
+                    contact_number: data.data.Contact_Number,
                     emergency_contact: data.data.Emergency_Contact,
                     email: data.data.Email || ''
                 });
@@ -53,7 +67,7 @@ const EditStudent = ({ isOpen, onClose, studentId, onSuccess }) => {
             }
         } catch (err) {
             console.error('Error fetching student:', err);
-            setError('Failed to connect to server');
+            setError(err.message || 'Failed to connect to server');
         } finally {
             setLoading(false);
         }
@@ -79,7 +93,7 @@ const EditStudent = ({ isOpen, onClose, studentId, onSuccess }) => {
                 distance_from_home: parseInt(formData.distance_from_home)
             };
 
-            const response = await fetch(`http://localhost:5000/api/users/${studentId}`, {
+            const response = await fetch(`http://localhost:5000/api/users/panel/${studentId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
@@ -88,7 +102,7 @@ const EditStudent = ({ isOpen, onClose, studentId, onSuccess }) => {
                 body: JSON.stringify(dataToSend)
             });
 
-            const data = await response.json();
+            const data = await parseApiResponse(response);
 
             if (response.ok) {
                 alert("Student updated successfully!");
