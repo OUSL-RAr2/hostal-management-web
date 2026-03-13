@@ -277,6 +277,16 @@
   color: white;
 }
 
+.status-badge-modern.status-resolved {
+  background-color: #10b981;
+  color: white;
+}
+
+.status-badge-modern.status-rejected {
+  background-color: #ef4444;
+  color: white;
+}
+
 .complaint-body {
   margin-bottom: 16px;
 }
@@ -375,6 +385,27 @@
   color: #047857;
   display: block;
   margin-bottom: 4px;
+}
+
+.student-response-box {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #eff6ff;
+  border-left: 3px solid #3b82f6;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #1e3a8a;
+}
+
+.student-response-box strong {
+  color: #1d4ed8;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.student-response-text {
+  margin: 4px 0 0 0;
+  line-height: 1.5;
 }
 
 /* Modal Styles */

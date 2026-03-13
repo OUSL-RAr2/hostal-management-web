@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 import './ComplaintsManagement.css';
 
 const ComplaintsManagement = () => {
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('new');
   const [complaints, setComplaints] = useState([]);
   const [stats, setStats] = useState({
     total: 0,
@@ -83,6 +83,13 @@ const ComplaintsManagement = () => {
         )
       );
       refreshStats();
+    });
+
+    socket.on('complaint:deleted', ({ ComplaintID }) => {
+      console.log('🗑️ Complaint deleted:', ComplaintID);
+      setComplaints(prev => prev.filter((c) => c.ComplaintID !== ComplaintID));
+      refreshStats();
+      showToast('Complaint deleted', 'success');
     });
 
     // Cleanup on unmount
@@ -322,6 +329,41 @@ const ComplaintsManagement = () => {
     return statusMap[status] || status;
   };
 
+  const isAnonymousComplaint = (complaint) => {
+    const description = complaint?.Description || '';
+    return description.startsWith('[Anonymous Request]');
+  };
+
+  const getReporterLabel = (complaint) => {
+    if (isAnonymousComplaint(complaint)) return 'Anonymous';
+    return complaint?.User?.Username || 'Anonymous';
+  };
+
+  const getStudentReplies = (complaint) => {
+    const description = complaint?.Description || '';
+    return description
+      .split('\n')
+      .filter((line) => line.trim().startsWith('[Student Reply'))
+      .map((line) => {
+        const separatorIndex = line.indexOf(']:');
+        if (separatorIndex === -1) return line;
+        return line.slice(separatorIndex + 2).trim();
+      })
+      .filter(Boolean);
+  };
+
+  const getCleanComplaintDescription = (complaint) => {
+    const description = complaint?.Description || '';
+
+    const cleaned = description
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('[Student Reply'))
+      .join('\n')
+      .trim();
+
+    return cleaned || 'No description provided.';
+  };
+
   const updateComplaintStatus = async (complaintId, newStatus, adminResponse = null) => {
     try {
       const response = await fetch(`http://localhost:5000/api/complaints/${complaintId}/status`, {
@@ -420,6 +462,7 @@ const ComplaintsManagement = () => {
     : complaints.filter(c => {
         if (filter === 'new') return c.Status === 'pending';
         if (filter === 'in-progress') return c.Status === 'in_progress';
+        if (filter === 'resolved') return c.Status === 'resolved';
         return false;
       });
 
@@ -510,6 +553,12 @@ const ComplaintsManagement = () => {
           >
             In Progress
           </button>
+          <button 
+            className={`filter-tab ${filter === 'resolved' ? 'active' : ''}`}
+            onClick={() => setFilter('resolved')}
+          >
+            Resolved
+          </button>
         </div>
 
         {/* Complaints Grid */}
@@ -519,7 +568,11 @@ const ComplaintsManagement = () => {
               <p>No complaints found</p>
             </div>
           ) : (
-            filteredComplaints.map((complaint, index) => (
+            filteredComplaints.map((complaint, index) => {
+              const studentReplies = getStudentReplies(complaint);
+              const cleanDescription = getCleanComplaintDescription(complaint);
+
+              return (
               <div key={index} className={`complaint-card-modern priority-${complaint.Priority}`}>
                 <div className="complaint-header-modern">
                   <div className="complaint-id-section">
@@ -528,14 +581,22 @@ const ComplaintsManagement = () => {
                       {complaint.Priority.charAt(0).toUpperCase() + complaint.Priority.slice(1)} Priority
                     </span>
                   </div>
-                  <span className={`status-badge-modern status-${complaint.Status === 'pending' ? 'new' : 'progress'}`}>
+                  <span className={`status-badge-modern ${
+                    complaint.Status === 'pending'
+                      ? 'status-new'
+                      : complaint.Status === 'resolved'
+                        ? 'status-resolved'
+                        : complaint.Status === 'rejected'
+                          ? 'status-rejected'
+                          : 'status-progress'
+                  }`}>
                     {getStatusDisplay(complaint.Status)}
                   </span>
                 </div>
                 
                 <div className="complaint-body">
                   <h3 className="complaint-issue">{complaint.Title}</h3>
-                  <p className="complaint-description">{complaint.Description}</p>
+                  <p className="complaint-description">{cleanDescription}</p>
                   
                   <div className="complaint-meta">
                     <div className="meta-item">
@@ -544,7 +605,7 @@ const ComplaintsManagement = () => {
                     </div>
                     <div className="meta-item">
                       <User size={16} />
-                      <span>{complaint.User ? complaint.User.Username : 'Anonymous'}</span>
+                      <span>{getReporterLabel(complaint)}</span>
                     </div>
                     <div className="meta-item">
                       <Clock size={16} />
@@ -555,6 +616,15 @@ const ComplaintsManagement = () => {
                   {complaint.AdminResponse && (
                     <div className="admin-response">
                       <strong>Admin Response:</strong> {complaint.AdminResponse}
+                    </div>
+                  )}
+
+                  {studentReplies.length > 0 && (
+                    <div className="student-response-box">
+                      <strong>Student Reply:</strong>
+                      {studentReplies.map((reply, replyIndex) => (
+                        <p key={replyIndex} className="student-response-text">{reply}</p>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -586,7 +656,7 @@ const ComplaintsManagement = () => {
                   )}
                 </div>
               </div>
-            ))
+            )})
           )}
         </div>
       </div>
@@ -617,13 +687,35 @@ const ComplaintsManagement = () => {
             
             {selectedComplaint && (
               <div className="modal-complaint-info">
+                {(() => {
+                  const cleanDescription = getCleanComplaintDescription(selectedComplaint);
+                  const studentReplies = getStudentReplies(selectedComplaint);
+
+                  return (
+                    <>
                 <h3>{selectedComplaint.Title}</h3>
-                <p className="modal-complaint-desc">{selectedComplaint.Description}</p>
+                <p className="modal-complaint-desc">{cleanDescription}</p>
+                {selectedComplaint.AdminResponse && (
+                  <div className="admin-response">
+                    <strong>Admin Response:</strong> {selectedComplaint.AdminResponse}
+                  </div>
+                )}
+                {studentReplies.length > 0 && (
+                  <div className="student-response-box">
+                    <strong>Student Reply:</strong>
+                    {studentReplies.map((reply, replyIndex) => (
+                      <p key={replyIndex} className="student-response-text">{reply}</p>
+                    ))}
+                  </div>
+                )}
                 <div className="modal-complaint-meta">
                   <span>📋 #{selectedComplaint.ComplaintID.slice(0, 8)}</span>
-                  <span>👤 {selectedComplaint.User?.Username || 'Anonymous'}</span>
+                  <span>👤 {getReporterLabel(selectedComplaint)}</span>
                   <span>🏠 Room {selectedComplaint.Room?.RoomNumber || 'N/A'}</span>
                 </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
             
