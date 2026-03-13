@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 import './ComplaintsManagement.css';
 
 const ComplaintsManagement = () => {
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('new');
   const [complaints, setComplaints] = useState([]);
   const [stats, setStats] = useState({
     total: 0,
@@ -83,6 +83,13 @@ const ComplaintsManagement = () => {
         )
       );
       refreshStats();
+    });
+
+    socket.on('complaint:deleted', ({ ComplaintID }) => {
+      console.log('🗑️ Complaint deleted:', ComplaintID);
+      setComplaints(prev => prev.filter((c) => c.ComplaintID !== ComplaintID));
+      refreshStats();
+      showToast('Complaint deleted', 'success');
     });
 
     // Cleanup on unmount
@@ -322,6 +329,16 @@ const ComplaintsManagement = () => {
     return statusMap[status] || status;
   };
 
+  const isAnonymousComplaint = (complaint) => {
+    const description = complaint?.Description || '';
+    return description.startsWith('[Anonymous Request]');
+  };
+
+  const getReporterLabel = (complaint) => {
+    if (isAnonymousComplaint(complaint)) return 'Anonymous';
+    return complaint?.User?.Username || 'Anonymous';
+  };
+
   const updateComplaintStatus = async (complaintId, newStatus, adminResponse = null) => {
     try {
       const response = await fetch(`http://localhost:5000/api/complaints/${complaintId}/status`, {
@@ -420,6 +437,7 @@ const ComplaintsManagement = () => {
     : complaints.filter(c => {
         if (filter === 'new') return c.Status === 'pending';
         if (filter === 'in-progress') return c.Status === 'in_progress';
+        if (filter === 'resolved') return c.Status === 'resolved';
         return false;
       });
 
@@ -510,6 +528,12 @@ const ComplaintsManagement = () => {
           >
             In Progress
           </button>
+          <button 
+            className={`filter-tab ${filter === 'resolved' ? 'active' : ''}`}
+            onClick={() => setFilter('resolved')}
+          >
+            Resolved
+          </button>
         </div>
 
         {/* Complaints Grid */}
@@ -528,7 +552,15 @@ const ComplaintsManagement = () => {
                       {complaint.Priority.charAt(0).toUpperCase() + complaint.Priority.slice(1)} Priority
                     </span>
                   </div>
-                  <span className={`status-badge-modern status-${complaint.Status === 'pending' ? 'new' : 'progress'}`}>
+                  <span className={`status-badge-modern ${
+                    complaint.Status === 'pending'
+                      ? 'status-new'
+                      : complaint.Status === 'resolved'
+                        ? 'status-resolved'
+                        : complaint.Status === 'rejected'
+                          ? 'status-rejected'
+                          : 'status-progress'
+                  }`}>
                     {getStatusDisplay(complaint.Status)}
                   </span>
                 </div>
@@ -544,7 +576,7 @@ const ComplaintsManagement = () => {
                     </div>
                     <div className="meta-item">
                       <User size={16} />
-                      <span>{complaint.User ? complaint.User.Username : 'Anonymous'}</span>
+                      <span>{getReporterLabel(complaint)}</span>
                     </div>
                     <div className="meta-item">
                       <Clock size={16} />
@@ -621,7 +653,7 @@ const ComplaintsManagement = () => {
                 <p className="modal-complaint-desc">{selectedComplaint.Description}</p>
                 <div className="modal-complaint-meta">
                   <span>📋 #{selectedComplaint.ComplaintID.slice(0, 8)}</span>
-                  <span>👤 {selectedComplaint.User?.Username || 'Anonymous'}</span>
+                  <span>👤 {getReporterLabel(selectedComplaint)}</span>
                   <span>🏠 Room {selectedComplaint.Room?.RoomNumber || 'N/A'}</span>
                 </div>
               </div>
