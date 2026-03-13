@@ -7,7 +7,7 @@ const ViewStudent = ({ isOpen, onClose, studentId, student }) => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (isOpen && (studentId || student?.registrationNumber || student?.name)) {
+        if (isOpen && (studentId || student?.uid)) {
             fetchStudentData();
         }
     }, [isOpen, studentId, student]);
@@ -29,8 +29,8 @@ const ViewStudent = ({ isOpen, onClose, studentId, student }) => {
     const fetchStudentData = async () => {
         try {
             setLoading(true);
-            const query = student?.registrationNumber || student?.id || student?.name || studentId;
-            const response = await fetch(`http://localhost:5000/api/bookings/search-students?query=${encodeURIComponent(query)}`, {
+            const uid = studentId || student?.uid;
+            const response = await fetch(`http://localhost:5000/api/users/panel/${uid}`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
@@ -41,14 +41,7 @@ const ViewStudent = ({ isOpen, onClose, studentId, student }) => {
             const data = await parseApiResponse(response);
 
             if (response.ok) {
-                const list = Array.isArray(data.data) ? data.data : [];
-                const exactMatch = list.find((item) =>
-                    String(item?.UID || '') === String(studentId || '') ||
-                    String(item?.Registration_Number || '') === String(student?.registrationNumber || '') ||
-                    String(item?.NIC || '') === String(student?.id || '')
-                );
-
-                setStudentData(exactMatch || list[0] || null);
+                setStudentData(data.data || null);
                 setError(null);
             } else {
                 setError(data.message || 'Failed to fetch student data');
