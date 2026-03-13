@@ -319,8 +319,7 @@ const RoomManagement = ({ setActiveMenu }) => {
         <h2 className="section-title">Room Status</h2>
         <div className="room-stats-grid">
           {roomStats.map((stat, index) => (
-            <div key={index} className="room-stat-card">
-              <div className={`status-indicator ${stat.color}`}></div>
+            <div key={index} className={`room-stat-card ${stat.color}`}>
               <div className="room-stat-value">{stat.value}</div>
               <div className="room-stat-label">{stat.label}</div>
             </div>
