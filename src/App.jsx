@@ -13,6 +13,7 @@ import RegisterStudent from './pages/RegisterStudent';
 import AddRoom from './pages/AddRoom';
 import ViewStudent from './pages/ViewStudent';
 import EditStudent from './pages/EditStudent';
+import Report from './pages/Report';
 
 // Main App with Sidebar
 function MainApp() {
@@ -32,7 +33,7 @@ function MainApp() {
       case 'Check-in/out':
         return <CheckInOut />;
       case 'Reports':
-        return <div className="coming-soon">Reports Page - Coming Soon</div>;
+        return <Report />;
       case 'Settings':
         return <Settings/>;
       case 'Register Student':

@@ -70,8 +70,8 @@
 
 .filter-select:focus {
   outline: none;
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  border-color: #F66D14;
+  box-shadow: 0 0 0 3px rgba(255, 140, 90, 0.1);
 }
 
 .filter-select:hover {
@@ -256,14 +256,14 @@
 }
 
 .view-btn {
-  background-color: #8b5cf6;
+  background: linear-gradient(135deg, #FF8C5A, #F66D14);
   color: white;
 }
 
 .view-btn:hover {
-  background-color: #7c3aed;
+  background: linear-gradient(135deg, #d97b2e, #c26a10);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 140, 90, 0.3);
 }
 
 .assign-btn {
@@ -416,8 +416,8 @@
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  border-color: #F66D14;
+  box-shadow: 0 0 0 3px rgba(255, 140, 90, 0.1);
 }
 
 .modal-actions {
@@ -450,14 +450,14 @@
 }
 
 .submit-btn {
-  background-color: #8b5cf6;
+  background: linear-gradient(135deg, #FF8C5A, #F66D14);
   color: white;
 }
 
 .submit-btn:hover {
-  background-color: #7c3aed;
+  background: linear-gradient(135deg, #d97b2e, #c26a10);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 140, 90, 0.3);
 }
 
 /* Assign Modal Styles */
@@ -498,13 +498,13 @@
 
 .search-input:focus {
   outline: none;
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  border-color: #F66D14;
+  box-shadow: 0 0 0 3px rgba(255, 140, 90, 0.1);
 }
 
 .search-btn {
   padding: 10px 24px;
-  background-color: #8b5cf6;
+  background: linear-gradient(135deg, #FF8C5A, #F66D14);
   color: white;
   border: none;
   border-radius: 8px;
@@ -516,9 +516,9 @@
 }
 
 .search-btn:hover:not(:disabled) {
-  background-color: #7c3aed;
+  background: linear-gradient(135deg, #d97b2e, #c26a10);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 140, 90, 0.3);
 }
 
 .search-btn:disabled {
@@ -552,7 +552,7 @@
 
 .search-result-item:hover {
   background-color: #f3f4f6;
-  border-color: #8b5cf6;
+  border-color: #F66D14;
 }
 
 .student-info {
@@ -573,7 +573,7 @@
 
 .select-btn {
   padding: 6px 16px;
-  background-color: #8b5cf6;
+  background: linear-gradient(135deg, #FF8C5A, #F66D14);
   color: white;
   border: none;
   border-radius: 6px;
@@ -584,7 +584,7 @@
 }
 
 .select-btn:hover {
-  background-color: #7c3aed;
+  background: linear-gradient(135deg, #d97b2e, #c26a10);
 }
 
 .selected-student-section {
