@@ -1,7 +1,10 @@
 import React from "react";
 import './AddRoom.css';
 
-const AddRoom = () => {
+const AddRoom = ({ isOpen, onClose, onSuccess }) => {
+    // Don't render if not open
+    if (!isOpen) return null;
+
     const [formData, setFormData] = React.useState({
         roomNumber: '',
         floorNumber: '',
@@ -40,6 +43,7 @@ const AddRoom = () => {
                     capacity: '4',
                     gender: 'male'
                 });
+                if (onSuccess) onSuccess();
             } else {
                 alert(`Failed to add room: ${data.message || 'Unknown error'}`);
                 console.error('Error response:', data);
@@ -51,9 +55,11 @@ const AddRoom = () => {
     };
 
     return (
-        <div className="add-room">
-            <h1>Add New Room</h1>
-            <form className="add-room-form" onSubmit={handleSubmit}>
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="add-room" onClick={(e) => e.stopPropagation()}>
+                <button className="close-modal-btn" onClick={onClose}>&times;</button>
+                <h1>Add New Room</h1>
+                <form className="add-room-form" onSubmit={handleSubmit}>
 
                 <label htmlFor="roomNumber">Room Number:</label>
                 <input 
@@ -104,8 +110,9 @@ const AddRoom = () => {
 
                 <button type="submit">Add Room</button>
             </form>
+            </div>
         </div>
     );
-}
+};
 
 export default AddRoom;

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import './RoomManagement.css';
+import AddRoom from './AddRoom';
 
 const RoomManagement = ({ setActiveMenu }) => {
   const [rooms, setRooms] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [isAddRoomModalOpen, setIsAddRoomModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
   const [assigningRoom, setAssigningRoom] = useState(null);
   const [editFormData, setEditFormData] = useState({
@@ -49,10 +51,6 @@ const RoomManagement = ({ setActiveMenu }) => {
     } catch (error) {
       console.error('Error fetching rooms:', error);
     }
-  };
-
-  const handleAddRoom = () => {
-    setActiveMenu('Add Room');
   };
 
   const handleEditRoom = (room) => {
@@ -271,7 +269,7 @@ const RoomManagement = ({ setActiveMenu }) => {
           <p>Monitor room occupancy and allocation</p>
         </div>
         <div className="add-room-container">
-          <button className="add-room-btn" onClick={handleAddRoom}>Add New Room</button>
+          <button className="add-room-btn" onClick={() => setIsAddRoomModalOpen(true)}>Add New Room</button>
         </div>
       </div>
 
@@ -672,6 +670,16 @@ const RoomManagement = ({ setActiveMenu }) => {
           </div>
         </div>
       )}
+
+      {/* Add Room Modal */}
+      <AddRoom 
+        isOpen={isAddRoomModalOpen} 
+        onClose={() => setIsAddRoomModalOpen(false)}
+        onSuccess={() => {
+          setIsAddRoomModalOpen(false);
+          fetchRooms();
+        }}
+      />
     </div>
   );
 };
