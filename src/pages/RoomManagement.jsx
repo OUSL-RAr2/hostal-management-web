@@ -18,6 +18,8 @@ const RoomManagement = ({ setActiveMenu }) => {
   // Filter states
   const [filterGender, setFilterGender] = useState('all');
   const [filterFloor, setFilterFloor] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterStudentCount, setFilterStudentCount] = useState('all');
 
   // Assign modal states
   const [searchQuery, setSearchQuery] = useState('');
@@ -211,7 +213,15 @@ const RoomManagement = ({ setActiveMenu }) => {
     .filter(room => {
       const genderMatch = filterGender === 'all' || room.Gender === filterGender;
       const floorMatch = filterFloor === 'all' || room.FloorNumber.toString() === filterFloor;
-      return genderMatch && floorMatch;
+      const statusMatch = filterStatus === 'all' || room.Status.toLowerCase() === filterStatus.toLowerCase();
+      
+      let studentCountMatch = true;
+      if (filterStudentCount !== 'all') {
+        const count = parseInt(filterStudentCount);
+        studentCountMatch = room.CurrentOccupancy === count;
+      }
+      
+      return genderMatch && floorMatch && statusMatch && studentCountMatch;
     })
     .sort((a, b) => {
       // Define custom floor order: G, F, S, T
@@ -300,12 +310,46 @@ const RoomManagement = ({ setActiveMenu }) => {
             </select>
           </div>
 
-          {(filterGender !== 'all' || filterFloor !== 'all') && (
+          <div className="filter-group">
+            <label htmlFor="filter-status">Status:</label>
+            <select
+              id="filter-status"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">All</option>
+              <option value="available">Available</option>
+              <option value="occupied">Occupied</option>
+              <option value="maintenance">Maintenance</option>
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label htmlFor="filter-student-count">Student Count:</label>
+            <select
+              id="filter-student-count"
+              value={filterStudentCount}
+              onChange={(e) => setFilterStudentCount(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">All</option>
+              <option value="0">0 Students</option>
+              <option value="1">1 Student</option>
+              <option value="2">2 Students</option>
+              <option value="3">3 Students</option>
+              <option value="4">4 Students</option>
+            </select>
+          </div>
+
+          {(filterGender !== 'all' || filterFloor !== 'all' || filterStatus !== 'all' || filterStudentCount !== 'all') && (
             <button
               className="clear-filters-btn"
               onClick={() => {
                 setFilterGender('all');
                 setFilterFloor('all');
+                setFilterStatus('all');
+                setFilterStudentCount('all');
               }}
             >
               Clear Filters
