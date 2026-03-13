@@ -191,6 +191,17 @@
   box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
 }
 
+.delete-btn {
+  background-color: #ef4444;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
 @media (max-width: 768px) {
   .student-management {
     padding: 16px;

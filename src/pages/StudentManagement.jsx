@@ -16,6 +16,21 @@ const StudentManagement = ({ setActiveMenu }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
 
+  const parseApiResponse = async (response) => {
+    const raw = await response.text();
+
+    if (!raw) return {};
+
+    try {
+      return JSON.parse(raw);
+    } catch {
+      if (raw.trim().startsWith('<')) {
+        throw new Error('Server returned an HTML response. Check that backend API is running on port 5000.');
+      }
+      throw new Error('Server returned an invalid JSON response.');
+    }
+  };
+
   // Fetch students data when component mounts
   useEffect(() => {
     fetchStudents();
@@ -32,7 +47,7 @@ const StudentManagement = ({ setActiveMenu }) => {
         }
       });
 
-      const data = await response.json();
+      const data = await parseApiResponse(response);
 
       if (response.ok) {
         // Map backend data to frontend format
@@ -54,7 +69,7 @@ const StudentManagement = ({ setActiveMenu }) => {
       }
     } catch (err) {
       console.error('Error fetching students:', err);
-      setError('Failed to connect to server');
+      setError(err.message || 'Failed to connect to server');
     } finally {
       setLoading(false);
     }
@@ -108,6 +123,32 @@ const StudentManagement = ({ setActiveMenu }) => {
   const handleEditStudent = (studentId) => {
     setSelectedStudentId(studentId);
     setIsEditModalOpen(true);
+  };
+
+  // Handle delete student
+  const handleDeleteStudent = async (bookingId, studentName) => {
+    const confirmed = window.confirm(`Are you sure you want to delete ${studentName}? This action cannot be undone.`);
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/bookings/${bookingId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await parseApiResponse(response);
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to delete student');
+      }
+
+      await fetchStudents();
+    } catch (err) {
+      console.error('Error deleting student:', err);
+      window.alert(err.message || 'Failed to delete student');
+    }
   };
 
   return (
@@ -201,6 +242,12 @@ const StudentManagement = ({ setActiveMenu }) => {
                             onClick={() => handleEditStudent(student.uid)}
                           >
                             Edit
+                          </button>
+                          <button 
+                            className="action-btn delete-btn"
+                            onClick={() => handleDeleteStudent(student.bookingId, student.name)}
+                          >
+                            Delete
                           </button>
                         </div>
                       </td>
