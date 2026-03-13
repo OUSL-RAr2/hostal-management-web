@@ -386,6 +386,10 @@ const QRCodeDisplay = () => {
                         <QrCode size={16} />
                         <span>Used: <strong>{qrData.usedCount || 0} times</strong></span>
                       </div>
+                      <div className="qr-info-item qr-manual-code-row">
+                        <QrCode size={16} />
+                        <span>Manual code: <strong>{qrData.manualCode || 'N/A'}</strong></span>
+                      </div>
                       {qrData.generatedAt && (
                         <div className="qr-info-item">
                           <span className="qr-generated-time">

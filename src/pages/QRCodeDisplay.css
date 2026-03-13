@@ -307,6 +307,11 @@
   font-style: italic;
 }
 
+.qr-manual-code-row strong {
+  letter-spacing: 0.3px;
+  word-break: break-all;
+}
+
 /* QR Card Footer */
 .qr-card-footer {
   padding: 20px 25px;

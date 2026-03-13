@@ -270,6 +270,29 @@
   font-weight: 500;
 }
 
+.qr-manual-code {
+  margin-top: 10px;
+  background: #f8f9fa;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.qr-manual-code span {
+  display: block;
+  font-size: 11px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.qr-manual-code strong {
+  font-size: 14px;
+  color: #111827;
+  letter-spacing: 0.5px;
+  word-break: break-all;
+}
+
 /* Error State */
 .qr-error-state {
   text-align: center;

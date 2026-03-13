@@ -161,6 +161,10 @@ const QRCodeStandalone = ({ hostelType = 'boys' }) => {
                   <p>📱 Scan this QR code using the mobile app</p>
                   <p>🔄 Code refreshes instantly after each scan</p>
                 </div>
+                <div className="qr-manual-code">
+                  <span>Manual code:</span>
+                  <strong>{qrData.manualCode || 'N/A'}</strong>
+                </div>
               </>
             ) : (
               <div className="qr-error-state">
