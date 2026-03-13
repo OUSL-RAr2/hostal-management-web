@@ -339,6 +339,31 @@ const ComplaintsManagement = () => {
     return complaint?.User?.Username || 'Anonymous';
   };
 
+  const getStudentReplies = (complaint) => {
+    const description = complaint?.Description || '';
+    return description
+      .split('\n')
+      .filter((line) => line.trim().startsWith('[Student Reply'))
+      .map((line) => {
+        const separatorIndex = line.indexOf(']:');
+        if (separatorIndex === -1) return line;
+        return line.slice(separatorIndex + 2).trim();
+      })
+      .filter(Boolean);
+  };
+
+  const getCleanComplaintDescription = (complaint) => {
+    const description = complaint?.Description || '';
+
+    const cleaned = description
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('[Student Reply'))
+      .join('\n')
+      .trim();
+
+    return cleaned || 'No description provided.';
+  };
+
   const updateComplaintStatus = async (complaintId, newStatus, adminResponse = null) => {
     try {
       const response = await fetch(`http://localhost:5000/api/complaints/${complaintId}/status`, {
@@ -543,7 +568,11 @@ const ComplaintsManagement = () => {
               <p>No complaints found</p>
             </div>
           ) : (
-            filteredComplaints.map((complaint, index) => (
+            filteredComplaints.map((complaint, index) => {
+              const studentReplies = getStudentReplies(complaint);
+              const cleanDescription = getCleanComplaintDescription(complaint);
+
+              return (
               <div key={index} className={`complaint-card-modern priority-${complaint.Priority}`}>
                 <div className="complaint-header-modern">
                   <div className="complaint-id-section">
@@ -567,7 +596,7 @@ const ComplaintsManagement = () => {
                 
                 <div className="complaint-body">
                   <h3 className="complaint-issue">{complaint.Title}</h3>
-                  <p className="complaint-description">{complaint.Description}</p>
+                  <p className="complaint-description">{cleanDescription}</p>
                   
                   <div className="complaint-meta">
                     <div className="meta-item">
@@ -587,6 +616,15 @@ const ComplaintsManagement = () => {
                   {complaint.AdminResponse && (
                     <div className="admin-response">
                       <strong>Admin Response:</strong> {complaint.AdminResponse}
+                    </div>
+                  )}
+
+                  {studentReplies.length > 0 && (
+                    <div className="student-response-box">
+                      <strong>Student Reply:</strong>
+                      {studentReplies.map((reply, replyIndex) => (
+                        <p key={replyIndex} className="student-response-text">{reply}</p>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -618,7 +656,7 @@ const ComplaintsManagement = () => {
                   )}
                 </div>
               </div>
-            ))
+            )})
           )}
         </div>
       </div>
@@ -649,13 +687,35 @@ const ComplaintsManagement = () => {
             
             {selectedComplaint && (
               <div className="modal-complaint-info">
+                {(() => {
+                  const cleanDescription = getCleanComplaintDescription(selectedComplaint);
+                  const studentReplies = getStudentReplies(selectedComplaint);
+
+                  return (
+                    <>
                 <h3>{selectedComplaint.Title}</h3>
-                <p className="modal-complaint-desc">{selectedComplaint.Description}</p>
+                <p className="modal-complaint-desc">{cleanDescription}</p>
+                {selectedComplaint.AdminResponse && (
+                  <div className="admin-response">
+                    <strong>Admin Response:</strong> {selectedComplaint.AdminResponse}
+                  </div>
+                )}
+                {studentReplies.length > 0 && (
+                  <div className="student-response-box">
+                    <strong>Student Reply:</strong>
+                    {studentReplies.map((reply, replyIndex) => (
+                      <p key={replyIndex} className="student-response-text">{reply}</p>
+                    ))}
+                  </div>
+                )}
                 <div className="modal-complaint-meta">
                   <span>📋 #{selectedComplaint.ComplaintID.slice(0, 8)}</span>
                   <span>👤 {getReporterLabel(selectedComplaint)}</span>
                   <span>🏠 Room {selectedComplaint.Room?.RoomNumber || 'N/A'}</span>
                 </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
             
