@@ -217,14 +217,14 @@ const CheckInOut = () => {
               onClick={() => setActiveTab('check-in')}
             >
               <UserCheck size={20} />
-              Check-in
+              Check-in (Inside)
             </button>
             <button
               className={`tab-btn ${activeTab === 'check-out' ? 'active' : ''}`}
               onClick={() => setActiveTab('check-out')}
             >
               <UserX size={20} />
-              Check-out
+              Check-out (Outside)
             </button>
           </div>
 
@@ -242,9 +242,9 @@ const CheckInOut = () => {
           <div className="student-list">
             {activeTab === 'check-in' && (
               <>
-                <h3 className="list-title">Available for Check-in</h3>
+                <h3 className="list-title">Students Outside Hostel (Can Check In)</h3>
                 {availableForCheckIn.length === 0 ? (
-                  <p className="no-results">No students available for check-in</p>
+                  <p className="no-results">No students are currently outside hostel</p>
                 ) : (
                   availableForCheckIn.map((student) => (
                     <div key={student.userId} className="student-card">
@@ -259,7 +259,7 @@ const CheckInOut = () => {
                       </div>
                       <button className="checkin-btn" onClick={() => handleCheckAction(student.userId, 'Check-in')}>
                         <UserCheck size={18} />
-                        Check In
+                        Mark as Inside
                       </button>
                     </div>
                   ))
@@ -269,9 +269,9 @@ const CheckInOut = () => {
 
             {activeTab === 'check-out' && (
               <>
-                <h3 className="list-title">Available for Check-out</h3>
+                <h3 className="list-title">Students Inside Hostel (Can Check Out)</h3>
                 {availableForCheckOut.length === 0 ? (
-                  <p className="no-results">No students available for check-out</p>
+                  <p className="no-results">No students are currently inside hostel</p>
                 ) : (
                   availableForCheckOut.map((student) => (
                     <div key={student.userId} className="student-card">
@@ -286,7 +286,7 @@ const CheckInOut = () => {
                       </div>
                       <button className="checkout-btn" onClick={() => handleCheckAction(student.userId, 'Check-out')}>
                         <UserX size={18} />
-                        Check Out
+                        Mark as Outside
                       </button>
                     </div>
                   ))
