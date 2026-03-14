@@ -1,33 +1,94 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, Bell, Shield, Globe, Moon, Mail, Phone, MapPin, Save, UserPlus, Users as UsersIcon, X, LogOut } from 'lucide-react';
+import { User, Lock, Shield, Mail, Phone, Save, LogOut, Loader2, UserPlus, Users as UsersIcon, X } from 'lucide-react';
 import './Settings.css';
 import { useNotification } from '../components/ui/useNotification';
+import {
+  changeAdminPassword,
+  createAdminAccount,
+  deleteAdminAccount,
+  getAllAdmins,
+  getAdminProfile,
+  updateAdminProfile,
+} from '../services/authService';
 
 const Settings = ({ onLogout }) => {
   const navigate = useNavigate();
   const notify = useNotification();
   const [activeTab, setActiveTab] = useState('profile');
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
+  const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
+  const [currentAdminRole, setCurrentAdminRole] = useState('admin');
+  const [currentAdminId, setCurrentAdminId] = useState('');
+  const [adminUsers, setAdminUsers] = useState([]);
   const [formData, setFormData] = useState({
-    // Profile
-    fullName: 'Admin User',
-    email: 'admin@ousl.lk',
-    phone: '+94 77 123 4567',
-    address: 'OUSL Campus, Nawala',
-    // Notifications
-    emailNotifications: true,
-    smsNotifications: false,
-    complaintAlerts: true,
-    checkInAlerts: true,
+    fullName: '',
+    email: '',
+    phone: '',
+    nic: '',
   });
 
   const [newAdmin, setNewAdmin] = useState({
+    nic: '',
     name: '',
     email: '',
-    phone: '',
-    role: 'admin'
+    contactNumber: '',
+    password: '',
+    confirmPassword: '',
   });
+
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      setIsLoadingProfile(true);
+      try {
+        const response = await getAdminProfile();
+        const admin = response?.data;
+
+        setFormData({
+          fullName: admin?.Name || '',
+          email: admin?.Email || '',
+          phone: admin?.ContactNumber || '',
+          nic: admin?.NIC || '',
+        });
+        setCurrentAdminRole(admin?.Role || 'admin');
+        setCurrentAdminId(admin?.AdminID || '');
+      } catch (error) {
+        notify.error(error.message || 'Failed to load profile');
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    loadProfile();
+  }, [notify]);
+
+  const loadAdmins = useCallback(async () => {
+    try {
+      setIsLoadingAdmins(true);
+      const response = await getAllAdmins();
+      setAdminUsers(response?.data || []);
+    } catch (error) {
+      notify.error(error.message || 'Failed to load admin users');
+    } finally {
+      setIsLoadingAdmins(false);
+    }
+  }, [notify]);
+
+  useEffect(() => {
+    if (currentAdminRole === 'super_admin' && activeTab === 'admins') {
+      loadAdmins();
+    }
+  }, [activeTab, currentAdminRole, loadAdmins]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -37,22 +98,122 @@ const Settings = ({ onLogout }) => {
     }));
   };
 
-  const handleNewAdminChange = (e) => {
+  const handlePasswordInputChange = (e) => {
     const { name, value } = e.target;
-    setNewAdmin(prev => ({
+    setPasswordData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleSave = () => {
-    notify.success('Settings saved successfully!');
+  const handleNewAdminChange = (e) => {
+    const { name, value } = e.target;
+    setNewAdmin((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleAddAdmin = () => {
-    notify.success(`New admin added: ${newAdmin.name}`);
-    setShowAddAdminModal(false);
-    setNewAdmin({ name: '', email: '', phone: '', role: 'admin' });
+  const handleProfileSave = async () => {
+    if (!formData.fullName || !formData.email || !formData.phone) {
+      notify.error('Name, email and phone are required');
+      return;
+    }
+
+    try {
+      setIsSavingProfile(true);
+      await updateAdminProfile({
+        name: formData.fullName,
+        email: formData.email,
+        contactNumber: formData.phone,
+      });
+      notify.success('Profile updated successfully');
+    } catch (error) {
+      notify.error(error.message || 'Failed to update profile');
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handlePasswordSave = async () => {
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      notify.error('All password fields are required');
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      notify.error('New passwords do not match');
+      return;
+    }
+
+    try {
+      setIsSavingPassword(true);
+      await changeAdminPassword(passwordData);
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+      notify.success('Password updated successfully');
+    } catch (error) {
+      notify.error(error.message || 'Failed to update password');
+    } finally {
+      setIsSavingPassword(false);
+    }
+  };
+
+  const handleAddAdmin = async () => {
+    if (!newAdmin.nic || !newAdmin.name || !newAdmin.email || !newAdmin.contactNumber || !newAdmin.password || !newAdmin.confirmPassword) {
+      notify.error('All fields are required');
+      return;
+    }
+
+    if (newAdmin.password !== newAdmin.confirmPassword) {
+      notify.error('Passwords do not match');
+      return;
+    }
+
+    try {
+      setIsCreatingAdmin(true);
+      await createAdminAccount(newAdmin);
+      notify.success('Admin account created successfully');
+      setShowAddAdminModal(false);
+      setNewAdmin({
+        nic: '',
+        name: '',
+        email: '',
+        contactNumber: '',
+        password: '',
+        confirmPassword: '',
+      });
+      await loadAdmins();
+    } catch (error) {
+      notify.error(error.message || 'Failed to create admin account');
+    } finally {
+      setIsCreatingAdmin(false);
+    }
+  };
+
+  const handleDeleteAdmin = async (admin) => {
+    const confirmed = await notify.confirm({
+      title: 'Delete Admin',
+      message: `Are you sure you want to delete ${admin.Name}?`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteAdminAccount(admin.AdminID);
+      notify.success('Admin account deleted successfully');
+      await loadAdmins();
+    } catch (error) {
+      notify.error(error.message || 'Failed to delete admin account');
+    }
   };
 
   const handleLogout = async () => {
@@ -78,14 +239,7 @@ const Settings = ({ onLogout }) => {
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'security', label: 'Security', icon: Lock },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'admins', label: 'Admin Users', icon: UsersIcon },
-  ];
-
-  const adminUsers = [
-    { id: 1, name: 'Admin User', email: 'admin@ousl.lk', role: 'Super Admin', status: 'Active' },
-    { id: 2, name: 'John Doe', email: 'john@ousl.lk', role: 'Admin', status: 'Active' },
-    { id: 3, name: 'Jane Smith', email: 'jane@ousl.lk', role: 'Admin', status: 'Active' },
+    ...(currentAdminRole === 'super_admin' ? [{ id: 'admins', label: 'Admin Users', icon: UsersIcon }] : []),
   ];
 
   return (
@@ -119,6 +273,16 @@ const Settings = ({ onLogout }) => {
 
         {/* Content Area */}
         <div className="settings-content">
+          {isLoadingProfile ? (
+            <div className="settings-section">
+              <h2 className="section-title">
+                <Loader2 size={24} className="spin" />
+                Loading Settings
+              </h2>
+              <p className="section-description">Fetching your profile from server...</p>
+            </div>
+          ) : (
+            <>
           {/* Profile Settings */}
           {activeTab === 'profile' && (
             <div className="settings-section">
@@ -175,24 +339,23 @@ const Settings = ({ onLogout }) => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="address">
-                    <MapPin size={16} />
-                    Address
+                  <label htmlFor="nic">
+                    NIC
                   </label>
                   <input
                     type="text"
-                    id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    placeholder="Enter your address"
+                    id="nic"
+                    name="nic"
+                    value={formData.nic}
+                    disabled
+                    placeholder="NIC"
                   />
                 </div>
               </div>
 
-              <button className="save-btn" onClick={handleSave}>
-                <Save size={18} />
-                Save Changes
+              <button className="save-btn" onClick={handleProfileSave} disabled={isSavingProfile}>
+                {isSavingProfile ? <Loader2 size={18} className="spin" /> : <Save size={18} />}
+                {isSavingProfile ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           )}
@@ -215,6 +378,9 @@ const Settings = ({ onLogout }) => {
                   <input
                     type="password"
                     id="currentPassword"
+                    name="currentPassword"
+                    value={passwordData.currentPassword}
+                    onChange={handlePasswordInputChange}
                     placeholder="Enter current password"
                   />
                 </div>
@@ -227,6 +393,9 @@ const Settings = ({ onLogout }) => {
                   <input
                     type="password"
                     id="newPassword"
+                    name="newPassword"
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordInputChange}
                     placeholder="Enter new password"
                   />
                 </div>
@@ -239,80 +408,22 @@ const Settings = ({ onLogout }) => {
                   <input
                     type="password"
                     id="confirmPassword"
+                    name="confirmPassword"
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordInputChange}
                     placeholder="Confirm new password"
                   />
                 </div>
               </div>
 
-              <div className="security-options">
-                <div className="security-option">
-                  <div className="option-info">
-                    <h3>Login History</h3>
-                    <p>View recent login activity</p>
-                  </div>
-                  <button className="view-btn">View</button>
-                </div>
-              </div>
-
-              <button className="save-btn" onClick={handleSave}>
-                <Save size={18} />
-                Update Password
+              <button className="save-btn" onClick={handlePasswordSave} disabled={isSavingPassword}>
+                {isSavingPassword ? <Loader2 size={18} className="spin" /> : <Save size={18} />}
+                {isSavingPassword ? 'Updating...' : 'Update Password'}
               </button>
             </div>
           )}
 
-          {/* Notifications Settings */}
-          {activeTab === 'notifications' && (
-            <div className="settings-section">
-              <h2 className="section-title">
-                <Bell size={24} />
-                Notification Preferences
-              </h2>
-              <p className="section-description">Choose how you want to be notified</p>
-
-              <div className="notification-options">
-                <div className="notification-option">
-                  <div className="option-info">
-                    <h3>Complaint Alerts</h3>
-                    <p>Get notified when new complaints are submitted</p>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      name="complaintAlerts"
-                      checked={formData.complaintAlerts}
-                      onChange={handleInputChange}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
-
-                <div className="notification-option">
-                  <div className="option-info">
-                    <h3>Check-in Alerts</h3>
-                    <p>Get notified for student check-ins and check-outs</p>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      name="checkInAlerts"
-                      checked={formData.checkInAlerts}
-                      onChange={handleInputChange}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
-              </div>
-
-              <button className="save-btn" onClick={handleSave}>
-                <Save size={18} />
-                Save Preferences
-              </button>
-            </div>
-          )}
-
-          {/* Admin Users Tab */}
-          {activeTab === 'admins' && (
+          {activeTab === 'admins' && currentAdminRole === 'super_admin' && (
             <div className="settings-section">
               <div className="admin-header">
                 <div>
@@ -320,7 +431,7 @@ const Settings = ({ onLogout }) => {
                     <UsersIcon size={24} />
                     Admin Users
                   </h2>
-                  <p className="section-description">Manage administrator accounts</p>
+                  <p className="section-description">Super admin can add and view admin accounts</p>
                 </div>
                 <button className="add-admin-btn" onClick={() => setShowAddAdminModal(true)}>
                   <UserPlus size={18} />
@@ -328,43 +439,53 @@ const Settings = ({ onLogout }) => {
                 </button>
               </div>
 
-              <div className="admin-table-container">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Role</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {adminUsers.map((admin) => (
-                      <tr key={admin.id}>
-                        <td>{admin.name}</td>
-                        <td>{admin.email}</td>
-                        <td>
-                          <span className="role-badge">{admin.role}</span>
-                        </td>
-                        <td>
-                          <span className="status-badge active">{admin.status}</span>
-                        </td>
-                        <td>
-                          <button className="edit-admin-btn">Edit</button>
-                          <button className="delete-admin-btn">Delete</button>
-                        </td>
+              {isLoadingAdmins ? (
+                <p className="section-description">Loading admin users...</p>
+              ) : (
+                <div className="admin-table-container">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>NIC</th>
+                        <th>Contact</th>
+                        <th>Role</th>
+                        <th>Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {adminUsers.map((admin) => (
+                        <tr key={admin.AdminID}>
+                          <td>{admin.Name}</td>
+                          <td>{admin.Email}</td>
+                          <td>{admin.NIC}</td>
+                          <td>{admin.ContactNumber}</td>
+                          <td>
+                            <span className="role-badge">{admin.Role === 'super_admin' ? 'Super Admin' : 'Admin'}</span>
+                          </td>
+                          <td>
+                            {admin.Role !== 'super_admin' && admin.AdminID !== currentAdminId ? (
+                              <button className="delete-admin-btn" onClick={() => handleDeleteAdmin(admin)}>
+                                Delete
+                              </button>
+                            ) : (
+                              <span>-</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
+          )}
+            </>
           )}
         </div>
       </div>
 
-      {/* Add Admin Modal */}
       {showAddAdminModal && (
         <div className="modal-overlay" onClick={() => setShowAddAdminModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -376,10 +497,18 @@ const Settings = ({ onLogout }) => {
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label htmlFor="adminName">
-                  <User size={16} />
-                  Full Name
-                </label>
+                <label htmlFor="adminNic">NIC</label>
+                <input
+                  type="text"
+                  id="adminNic"
+                  name="nic"
+                  value={newAdmin.nic}
+                  onChange={handleNewAdminChange}
+                  placeholder="Enter NIC"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="adminName">Full Name</label>
                 <input
                   type="text"
                   id="adminName"
@@ -390,10 +519,7 @@ const Settings = ({ onLogout }) => {
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="adminEmail">
-                  <Mail size={16} />
-                  Email Address
-                </label>
+                <label htmlFor="adminEmail">Email Address</label>
                 <input
                   type="email"
                   id="adminEmail"
@@ -404,42 +530,46 @@ const Settings = ({ onLogout }) => {
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="adminPhone">
-                  <Phone size={16} />
-                  Phone Number
-                </label>
+                <label htmlFor="adminPhone">Phone Number</label>
                 <input
                   type="tel"
                   id="adminPhone"
-                  name="phone"
-                  value={newAdmin.phone}
+                  name="contactNumber"
+                  value={newAdmin.contactNumber}
                   onChange={handleNewAdminChange}
                   placeholder="Enter phone number"
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="adminRole">
-                  <Shield size={16} />
-                  Role
-                </label>
-                <select
-                  id="adminRole"
-                  name="role"
-                  value={newAdmin.role}
+                <label htmlFor="adminPassword">Password</label>
+                <input
+                  type="password"
+                  id="adminPassword"
+                  name="password"
+                  value={newAdmin.password}
                   onChange={handleNewAdminChange}
-                >
-                  <option value="admin">Admin</option>
-                  <option value="super-admin">Super Admin</option>
-                </select>
+                  placeholder="Enter password"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="adminConfirmPassword">Confirm Password</label>
+                <input
+                  type="password"
+                  id="adminConfirmPassword"
+                  name="confirmPassword"
+                  value={newAdmin.confirmPassword}
+                  onChange={handleNewAdminChange}
+                  placeholder="Confirm password"
+                />
               </div>
             </div>
             <div className="modal-footer">
               <button className="cancel-btn" onClick={() => setShowAddAdminModal(false)}>
                 Cancel
               </button>
-              <button className="save-btn" onClick={handleAddAdmin}>
-                <UserPlus size={18} />
-                Add Admin
+              <button className="save-btn" onClick={handleAddAdmin} disabled={isCreatingAdmin}>
+                {isCreatingAdmin ? <Loader2 size={18} className="spin" /> : <UserPlus size={18} />}
+                {isCreatingAdmin ? 'Creating...' : 'Add Admin'}
               </button>
             </div>
           </div>
