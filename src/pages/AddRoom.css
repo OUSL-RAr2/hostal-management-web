@@ -17,7 +17,7 @@
 }
 
 .add-room::-webkit-scrollbar-thumb {
-    background-color: #4e73df;
+    background: linear-gradient(135deg, #FF8C5A, #F66D14);
     border-radius: 10px;
 }
 
@@ -50,9 +50,9 @@
 }
 
 .add-room-form input:focus {
-    border-color: #4e73df;
+    border-color: #F66D14;
     outline: none;
-    box-shadow: 0 0 5px rgba(78, 115, 223, 0.5);
+    box-shadow: 0 0 5px rgba(255, 140, 90, 0.5);
 }
 
 .add-room-form select {
@@ -67,15 +67,15 @@
 }
 
 .add-room-form select:focus {
-    border-color: #4e73df;
+    border-color: #F66D14;
     outline: none;
-    box-shadow: 0 0 5px rgba(78, 115, 223, 0.5);
+    box-shadow: 0 0 5px rgba(255, 140, 90, 0.5);
 }
 
 .add-room-form button {
     margin-top: 25px;
     padding: 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #FF8C5A, #F66D14);
     color: white;
     font-size: 16px;
     font-weight: 600;
@@ -86,8 +86,9 @@
 }
 
 .add-room-form button:hover {
+    background: linear-gradient(135deg, #d97b2e, #c26a10);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 5px 15px rgba(255, 140, 90, 0.4);
 }
 
 .add-room-form button:active {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, UserCheck, UserX, Calendar, Clock, Home, User } from 'lucide-react';
+import { Search, UserCheck, UserX, Calendar, Clock, Home, User, Filter } from 'lucide-react';
 import { io } from 'socket.io-client';
 import './CheckInOut.css';
 
@@ -116,13 +116,47 @@ const CheckInOut = () => {
   if (loading) {
     return <div className="loading-container">Loading check-in/out data...</div>;
   }
+  const [selectedStudent, setSelectedStudent] = useState(null);
+
+  const studentsData = [
+    { id: '223604291', name: 'K.M.T.N. Deshapriya', room: 'T-14', status: 'checked-out' },
+    { id: '123600601', name: 'A.M.S.G. Athapaththu', room: 'S-08', status: 'checked-out' },
+    { id: '723602367', name: 'G.A.C.Kawishka', room: 'F-24', status: 'checked-in' },
+    { id: '623606783', name: 'L.A.C.D. Lenagala', room: 'T-15', status: 'checked-in' },
+    { id: '523604291', name: 'P.A.S. Perera', room: 'B-201', status: 'checked-out' },
+    { id: '423600601', name: 'N.K. Silva', room: 'A-102', status: 'checked-in' },
+  ];
+
+  const recentActivities = [
+    { id: '223604291', name: 'K.M.T.N. Deshapriya', room: 'T-14', action: 'Check-in', time: '2 hours ago', date: '2025-03-03' },
+    { id: '123600601', name: 'A.M.S.G. Athapaththu', room: 'S-08', action: 'Check-out', time: '3 hours ago', date: '2025-03-03' },
+    { id: '723602367', name: 'G.A.C.Kawishka', room: 'F-24', action: 'Check-in', time: '5 hours ago', date: '2025-03-03' },
+    { id: '623606783', name: 'L.A.C.D. Lenagala', room: 'T-15', action: 'Check-out', time: '1 day ago', date: '2025-03-02' },
+  ];
+
+  const handleCheckIn = (student) => {
+    alert(`Check-in successful for ${student.name} - Room ${student.room}`);
+  };
+
+  const handleCheckOut = (student) => {
+    alert(`Check-out successful for ${student.name} - Room ${student.room}`);
+  };
+
+  const filteredStudents = studentsData.filter(student =>
+    student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    student.id.includes(searchQuery) ||
+    student.room.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const availableForCheckIn = filteredStudents.filter(s => s.status === 'checked-out');
+  const availableForCheckOut = filteredStudents.filter(s => s.status === 'checked-in');
 
   return (
     <div className="checkinout-page">
       {/* Header */}
       <div className="checkinout-header">
         <h1>Check-in / Check-out Management</h1>
-        <p>Monitor real-time student presence in the hostel</p>
+        <p>Manage student check-ins and check-outs</p>
       </div>
 
       {/* Stats Cards */}
@@ -132,8 +166,8 @@ const CheckInOut = () => {
             <UserCheck size={24} />
           </div>
           <div className="stat-info">
-            <div className="stat-value">{stats.inside}</div>
-            <div className="stat-label">Students Inside</div>
+            <div className="stat-value">{studentsData.filter(s => s.status === 'checked-in').length}</div>
+            <div className="stat-label">Checked In</div>
           </div>
         </div>
         <div className="stat-card stat-orange">
@@ -141,8 +175,8 @@ const CheckInOut = () => {
             <UserX size={24} />
           </div>
           <div className="stat-info">
-            <div className="stat-value">{stats.outside}</div>
-            <div className="stat-label">Students Outside</div>
+            <div className="stat-value">{studentsData.filter(s => s.status === 'checked-out').length}</div>
+            <div className="stat-label">Checked Out</div>
           </div>
         </div>
         <div className="stat-card stat-green">
@@ -193,26 +227,29 @@ const CheckInOut = () => {
           <div className="student-list">
             {activeTab === 'check-in' && (
               <>
-                <h3 className="list-title">Students Currently Outside</h3>
+                <h3 className="list-title">Available for Check-in</h3>
                 {availableForCheckIn.length === 0 ? (
-                  <p className="no-results">No students currently outside</p>
+                  <p className="no-results">No students available for check-in</p>
                 ) : (
                   availableForCheckIn.map((student) => (
-                    <div key={student.userId} className="student-card">
+                    <div key={student.id} className="student-card">
                       <div className="student-info">
-                        <div className="student-name">{student.username}</div>
+                        <div className="student-name">{student.name}</div>
                         <div className="student-details">
                           <span className="detail-item">
                             <User size={14} />
-                            NIC: {student.nic}
+                            ID: {student.id}
                           </span>
                           <span className="detail-item">
-                            <UserCheck size={14} />
-                            Reg: {student.registrationNumber}
+                            <Home size={14} />
+                            Room: {student.room}
                           </span>
                         </div>
                       </div>
-                      <div className="status-label outside">Outside</div>
+                      <button className="checkin-btn" onClick={() => handleCheckIn(student)}>
+                        <UserCheck size={18} />
+                        Check In
+                      </button>
                     </div>
                   ))
                 )}
@@ -221,26 +258,29 @@ const CheckInOut = () => {
 
             {activeTab === 'check-out' && (
               <>
-                <h3 className="list-title">Students Currently Inside</h3>
+                <h3 className="list-title">Available for Check-out</h3>
                 {availableForCheckOut.length === 0 ? (
-                  <p className="no-results">No students currently inside</p>
+                  <p className="no-results">No students available for check-out</p>
                 ) : (
                   availableForCheckOut.map((student) => (
-                    <div key={student.userId} className="student-card">
+                    <div key={student.id} className="student-card">
                       <div className="student-info">
-                        <div className="student-name">{student.username}</div>
+                        <div className="student-name">{student.name}</div>
                         <div className="student-details">
                           <span className="detail-item">
                             <User size={14} />
-                            NIC: {student.nic}
+                            ID: {student.id}
                           </span>
                           <span className="detail-item">
-                            <UserCheck size={14} />
-                            Reg: {student.registrationNumber}
+                            <Home size={14} />
+                            Room: {student.room}
                           </span>
                         </div>
                       </div>
-                      <div className="status-label inside">Inside</div>
+                      <button className="checkout-btn" onClick={() => handleCheckOut(student)}>
+                        <UserX size={18} />
+                        Check Out
+                      </button>
                     </div>
                   ))
                 )}
@@ -253,7 +293,7 @@ const CheckInOut = () => {
         <div className="recent-activities-section">
           <h3 className="section-title">
             <Clock size={20} />
-            Recent Logs (Real-time)
+            Recent Activities
           </h3>
           <div className="activities-list">
             {recentActivities.map((activity, index) => (
@@ -264,10 +304,11 @@ const CheckInOut = () => {
                 <div className="activity-info">
                   <div className="activity-student">{activity.name}</div>
                   <div className="activity-details">
+                    <span className="activity-room">Room: {activity.room}</span>
                     <span className="activity-action">{activity.action}</span>
                   </div>
                   <div className="activity-time">
-                    <Clock size={12} />
+                    <Calendar size={12} />
                     {activity.time}
                   </div>
                 </div>

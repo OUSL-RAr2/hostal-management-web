@@ -2,3 +2,10 @@
   display: flex;
   height: 100vh;
 }
+
+:root {
+  --bg-gradient: linear-gradient(135deg, #f5cb9280 0%, #f69d7780 50%, #F66D1480 100%);
+  --header-bg: #ffffff;
+  --text-main: #1f2937;
+  --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
