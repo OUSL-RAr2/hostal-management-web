@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './RoomManagement.css';
 import AddRoom from './AddRoom';
+import { useNotification } from '../components/ui/useNotification';
 
-const RoomManagement = ({ setActiveMenu }) => {
+const RoomManagement = () => {
+  const notify = useNotification();
   const [rooms, setRooms] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -88,14 +90,14 @@ const RoomManagement = ({ setActiveMenu }) => {
       const data = await response.json();
       
       if (response.ok) {
-        alert('Room updated successfully!');
+        notify.success('Room updated successfully!');
         setIsEditModalOpen(false);
         fetchRooms(); // Refresh the rooms list
       } else {
-        alert(`Failed to update room: ${data.message || 'Unknown error'}`);
+        notify.error(`Failed to update room: ${data.message || 'Unknown error'}`);
       }
     } catch (error) {
-      alert(`An error occurred while updating the room: ${error.message}`);
+      notify.error(`An error occurred while updating the room: ${error.message}`);
       console.error('Update error:', error);
     }
   };
@@ -127,7 +129,7 @@ const RoomManagement = ({ setActiveMenu }) => {
 
   const handleSearchStudents = async () => {
     if (!searchQuery.trim()) {
-      alert('Please enter a search term');
+      notify.info('Please enter a search term');
       return;
     }
 
@@ -141,13 +143,13 @@ const RoomManagement = ({ setActiveMenu }) => {
       if (response.ok) {
         setSearchResults(data.data);
         if (data.data.length === 0) {
-          alert('No students found');
+          notify.info('No students found');
         }
       } else {
-        alert(`Search failed: ${data.message}`);
+        notify.error(`Search failed: ${data.message}`);
       }
     } catch (error) {
-      alert(`Search error: ${error.message}`);
+      notify.error(`Search error: ${error.message}`);
       console.error('Search error:', error);
     } finally {
       setIsSearching(false);
@@ -162,17 +164,17 @@ const RoomManagement = ({ setActiveMenu }) => {
 
   const handleAssignStudent = async () => {
     if (!selectedStudent) {
-      alert('Please select a student');
+      notify.info('Please select a student');
       return;
     }
 
     if (!checkInDate || !checkOutDate) {
-      alert('Please select check-in and check-out dates');
+      notify.info('Please select check-in and check-out dates');
       return;
     }
 
     if (new Date(checkInDate) >= new Date(checkOutDate)) {
-      alert('Check-out date must be after check-in date');
+      notify.info('Check-out date must be after check-in date');
       return;
     }
 
@@ -194,14 +196,14 @@ const RoomManagement = ({ setActiveMenu }) => {
       const data = await response.json();
 
       if (response.ok) {
-        alert('Student assigned successfully!');
+        notify.success('Student assigned successfully!');
         handleCloseAssignModal();
         fetchRooms(); // Refresh rooms
       } else {
-        alert(`Assignment failed: ${data.message}`);
+        notify.error(`Assignment failed: ${data.message}`);
       }
     } catch (error) {
-      alert(`An error occurred: ${error.message}`);
+      notify.error(`An error occurred: ${error.message}`);
       console.error('Assignment error:', error);
     }
   };

@@ -1,9 +1,9 @@
 import React from "react";
 import './AddRoom.css';
+import { useNotification } from '../components/ui/useNotification';
 
 const AddRoom = ({ isOpen, onClose, onSuccess }) => {
-    // Don't render if not open
-    if (!isOpen) return null;
+    const notify = useNotification();
 
     const [formData, setFormData] = React.useState({
         roomNumber: '',
@@ -35,7 +35,7 @@ const AddRoom = ({ isOpen, onClose, onSuccess }) => {
             const data = await response.json();
             
             if (response.ok) {
-                alert("Room added successfully!");
+                notify.success('Room added successfully!');
                 // Reset form
                 setFormData({
                     roomNumber: '',
@@ -45,14 +45,17 @@ const AddRoom = ({ isOpen, onClose, onSuccess }) => {
                 });
                 if (onSuccess) onSuccess();
             } else {
-                alert(`Failed to add room: ${data.message || 'Unknown error'}`);
+                notify.error(`Failed to add room: ${data.message || 'Unknown error'}`);
                 console.error('Error response:', data);
             }
         } catch (error) {
-            alert(`An error occurred while adding the room: ${error.message}`);
+            notify.error(`An error occurred while adding the room: ${error.message}`);
             console.error('Request error:', error);
         }
     };
+
+    // Don't render if not open
+    if (!isOpen) return null;
 
     return (
         <div className="modal-overlay" onClick={onClose}>

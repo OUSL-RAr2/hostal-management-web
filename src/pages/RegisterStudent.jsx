@@ -1,9 +1,9 @@
 import React from "react";
 import './RegisterStudent.css'
+import { useNotification } from '../components/ui/useNotification';
 
 const RegisterStudent = ({ isOpen, onClose, onSuccess }) => {
-    // Don't render if not open
-    if (!isOpen) return null;
+    const notify = useNotification();
 
     const [formData, setFormData] = React.useState({
         nic: '',
@@ -37,6 +37,9 @@ const RegisterStudent = ({ isOpen, onClose, onSuccess }) => {
         }
     };
 
+    // Don't render if not open
+    if (!isOpen) return null;
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         
@@ -60,7 +63,7 @@ const RegisterStudent = ({ isOpen, onClose, onSuccess }) => {
             const data = await response.json();
 
             if (response.ok) {
-                alert("Student registered successfully!");
+                notify.success('Student registered successfully!');
                 // Reset form
                 setFormData({
                     nic: '',
@@ -78,10 +81,10 @@ const RegisterStudent = ({ isOpen, onClose, onSuccess }) => {
                 // Call success callback to close modal and refresh
                 if (onSuccess) onSuccess();
             } else {
-                alert(`Failed to register student: ${data.message || data || 'Unknown error'}`);
+                notify.error(`Failed to register student: ${data.message || data || 'Unknown error'}`);
             }
         } catch (error) {
-            alert("An error occurred while registering the student: " + error.message);
+            notify.error('An error occurred while registering the student: ' + error.message);
         }
     };
 

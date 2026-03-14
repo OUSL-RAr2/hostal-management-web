@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import './EditStudent.css';
+import { useNotification } from '../components/ui/useNotification';
 
 const EditStudent = ({ isOpen, onClose, studentId, onSuccess }) => {
+    const notify = useNotification();
     const [formData, setFormData] = useState({
         nic: '',
         username: '',
@@ -105,13 +107,13 @@ const EditStudent = ({ isOpen, onClose, studentId, onSuccess }) => {
             const data = await parseApiResponse(response);
 
             if (response.ok) {
-                alert("Student updated successfully!");
+                notify.success('Student updated successfully!');
                 if (onSuccess) onSuccess();
             } else {
-                alert(`Failed to update student: ${data.message || data || 'Unknown error'}`);
+                notify.error(`Failed to update student: ${data.message || data || 'Unknown error'}`);
             }
         } catch (error) {
-            alert("An error occurred while updating the student: " + error.message);
+            notify.error('An error occurred while updating the student: ' + error.message);
         } finally {
             setLoading(false);
         }

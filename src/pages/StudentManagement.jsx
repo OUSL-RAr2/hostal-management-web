@@ -4,9 +4,11 @@ import './StudentManagement.css';
 import RegisterStudent from './RegisterStudent';
 import ViewStudent from './ViewStudent';
 import EditStudent from './EditStudent';
+import { useNotification } from '../components/ui/useNotification';
 
 
-const StudentManagement = ({ setActiveMenu }) => {
+const StudentManagement = () => {
+  const notify = useNotification();
   const [searchQuery, setSearchQuery] = useState('');
   const [studentsData, setStudentsData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -139,7 +141,13 @@ const StudentManagement = ({ setActiveMenu }) => {
 
   // Handle delete student
   const handleDeleteStudent = async (bookingId, studentName) => {
-    const confirmed = window.confirm(`Are you sure you want to delete ${studentName}? This action cannot be undone.`);
+    const confirmed = await notify.confirm({
+      title: 'Delete Student',
+      message: `Are you sure you want to delete ${studentName}? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      tone: 'danger'
+    });
     if (!confirmed) return;
 
     try {
@@ -157,9 +165,10 @@ const StudentManagement = ({ setActiveMenu }) => {
       }
 
       await fetchStudents(currentPage, searchQuery);
+      notify.success('Student deleted successfully.');
     } catch (err) {
       console.error('Error deleting student:', err);
-      window.alert(err.message || 'Failed to delete student');
+      notify.error(err.message || 'Failed to delete student');
     }
   };
 
