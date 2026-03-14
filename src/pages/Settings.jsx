@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, Lock, Bell, Shield, Globe, Moon, Mail, Phone, MapPin, Save, UserPlus, Users as UsersIcon, X, LogOut } from 'lucide-react';
 import './Settings.css';
 
-const Settings = () => {
+const Settings = ({ onLogout }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -55,11 +57,13 @@ const Settings = () => {
     const confirmLogout = window.confirm('Are you sure you want to logout?');
     if (confirmLogout) {
       // clear token & user data
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      alert('Logged out successfully!');
-      // reload app to show login page
-      window.location.reload();
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('adminInfo');
+      if (onLogout) {
+        onLogout();
+      }
+      // redirect to login page
+      navigate('/');
     }
   };
 
