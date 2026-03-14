@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './RoomManagement.css';
 import AddRoom from './AddRoom';
 import { useNotification } from '../components/ui/useNotification';
@@ -8,9 +8,13 @@ const RoomManagement = () => {
   const [rooms, setRooms] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isAddRoomModalOpen, setIsAddRoomModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
   const [assigningRoom, setAssigningRoom] = useState(null);
+  const [viewingRoom, setViewingRoom] = useState(null);
+  const [roomOccupants, setRoomOccupants] = useState([]);
+  const [isLoadingOccupants, setIsLoadingOccupants] = useState(false);
   const [editFormData, setEditFormData] = useState({
     roomNumber: '',
     floorNumber: '',
@@ -32,10 +36,43 @@ const RoomManagement = () => {
   const [checkInDate, setCheckInDate] = useState('');
   const [checkOutDate, setCheckOutDate] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const searchAbortControllerRef = useRef(null);
 
   // Fetch rooms from API
   useEffect(() => {
     fetchRooms();
+  }, []);
+
+  useEffect(() => {
+    if (!isAssignModalOpen || selectedStudent) {
+      return;
+    }
+
+    const trimmedQuery = searchQuery.trim();
+
+    if (!trimmedQuery) {
+      if (searchAbortControllerRef.current) {
+        searchAbortControllerRef.current.abort();
+        searchAbortControllerRef.current = null;
+      }
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      handleSearchStudents(trimmedQuery);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [isAssignModalOpen, searchQuery, selectedStudent]);
+
+  useEffect(() => {
+    return () => {
+      if (searchAbortControllerRef.current) {
+        searchAbortControllerRef.current.abort();
+      }
+    };
   }, []);
 
   const fetchRooms = async () => {
@@ -118,6 +155,10 @@ const RoomManagement = () => {
   };
 
   const handleCloseAssignModal = () => {
+    if (searchAbortControllerRef.current) {
+      searchAbortControllerRef.current.abort();
+      searchAbortControllerRef.current = null;
+    }
     setIsAssignModalOpen(false);
     setAssigningRoom(null);
     setSearchQuery('');
@@ -127,36 +168,109 @@ const RoomManagement = () => {
     setCheckOutDate('');
   };
 
-  const handleSearchStudents = async () => {
-    if (!searchQuery.trim()) {
-      notify.info('Please enter a search term');
-      return;
-    }
+  const formatDate = (dateValue) => {
+    if (!dateValue) return 'N/A';
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString();
+  };
 
-    setIsSearching(true);
+  const getOccupantNic = (occupant) => {
+    const nicValue = occupant?.User?.NIC || occupant?.User?.nic || occupant?.NIC || occupant?.nic;
+    return nicValue && String(nicValue).trim() ? nicValue : 'N/A';
+  };
+
+  const handleOpenViewModal = async (room) => {
+    setViewingRoom(room);
+    setIsViewModalOpen(true);
+    setIsLoadingOccupants(true);
+    setRoomOccupants([]);
+
     try {
-      const response = await fetch(`http://localhost:5000/api/bookings/search-students?query=${encodeURIComponent(searchQuery)}`, {
+      const response = await fetch(`http://localhost:5000/api/bookings/room/${room.RoomID}/occupants`, {
         credentials: 'include'
       });
       const data = await response.json();
 
       if (response.ok) {
-        setSearchResults(data.data);
-        if (data.data.length === 0) {
-          notify.info('No students found');
-        }
+        setRoomOccupants(data.data || []);
+      } else {
+        notify.error(`Failed to fetch room occupants: ${data.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      notify.error(`Error fetching room occupants: ${error.message}`);
+      console.error('Fetch room occupants error:', error);
+    } finally {
+      setIsLoadingOccupants(false);
+    }
+  };
+
+  const handleCloseViewModal = () => {
+    setIsViewModalOpen(false);
+    setViewingRoom(null);
+    setRoomOccupants([]);
+    setIsLoadingOccupants(false);
+  };
+
+  const handleSearchStudents = async (queryValue = searchQuery, options = {}) => {
+    const { showValidationMessage = false } = options;
+    const trimmedQuery = queryValue.trim();
+
+    if (!trimmedQuery) {
+      if (searchAbortControllerRef.current) {
+        searchAbortControllerRef.current.abort();
+        searchAbortControllerRef.current = null;
+      }
+      setSearchResults([]);
+      setIsSearching(false);
+      if (showValidationMessage) {
+        notify.info('Please enter a search term');
+      }
+      return;
+    }
+
+    if (searchAbortControllerRef.current) {
+      searchAbortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    searchAbortControllerRef.current = controller;
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(`http://localhost:5000/api/bookings/search-students?query=${encodeURIComponent(trimmedQuery)}`, {
+        credentials: 'include',
+        signal: controller.signal
+      });
+      const data = await response.json();
+
+      if (searchAbortControllerRef.current !== controller) {
+        return;
+      }
+
+      if (response.ok) {
+        setSearchResults(data.data || []);
       } else {
         notify.error(`Search failed: ${data.message}`);
       }
     } catch (error) {
-      notify.error(`Search error: ${error.message}`);
-      console.error('Search error:', error);
+      if (error.name !== 'AbortError') {
+        notify.error(`Search error: ${error.message}`);
+        console.error('Search error:', error);
+      }
     } finally {
-      setIsSearching(false);
+      if (searchAbortControllerRef.current === controller) {
+        searchAbortControllerRef.current = null;
+        setIsSearching(false);
+      }
     }
   };
 
   const handleSelectStudent = (student) => {
+    if (searchAbortControllerRef.current) {
+      searchAbortControllerRef.current.abort();
+      searchAbortControllerRef.current = null;
+    }
     setSelectedStudent(student);
     setSearchResults([]);
     setSearchQuery('');
@@ -410,8 +524,16 @@ const RoomManagement = () => {
                     <td>{room.Gender ? room.Gender.charAt(0).toUpperCase() + room.Gender.slice(1) : '-'}</td>
                     <td>
                       <div className="action-buttons">
+                        <button
+                          className="action-btn view-btn"
+                          onClick={() => handleOpenViewModal(room)}
+                        >
+                          View
+                        </button>
                         {room.Status === 'occupied' ? (
-                          <button className="action-btn view-btn">View Details</button>
+                          <button className="action-btn assign-btn" disabled>
+                            Assign
+                          </button>
                         ) : (
                           <button 
                             className="action-btn assign-btn"
@@ -435,6 +557,72 @@ const RoomManagement = () => {
           </table>
         </div>
       </div>
+
+      {/* View Occupants Modal */}
+      {isViewModalOpen && (
+        <div className="modal-overlay" onClick={handleCloseViewModal}>
+          <div className="modal-content occupants-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Assigned Students - Room {viewingRoom?.RoomNumber}</h2>
+              <button className="close-btn" onClick={handleCloseViewModal}>&times;</button>
+            </div>
+
+            <div className="occupants-modal-body">
+              <div className="room-meta">
+                <span>Capacity: {viewingRoom?.Capacity ?? '-'}</span>
+                <span>Occupied: {viewingRoom?.CurrentOccupancy ?? 0}</span>
+                <span>Status: {viewingRoom?.Status || '-'}</span>
+              </div>
+
+              {isLoadingOccupants ? (
+                <div className="occupants-empty-state">Loading assigned students...</div>
+              ) : roomOccupants.length === 0 ? (
+                <div className="occupants-empty-state">No assigned students found for this room.</div>
+              ) : (
+                <div className="occupants-list">
+                  {roomOccupants.map((occupant) => (
+                    <div key={occupant.BookingID} className="occupant-card">
+                      <div className="occupant-card-title">{occupant.User?.Username || 'N/A'}</div>
+                      <div className="occupant-details-grid">
+                        <div className="occupant-detail-item">
+                          <span className="detail-label">Registration Number</span>
+                          <span className="detail-value">{occupant.User?.Registration_Number || 'N/A'}</span>
+                        </div>
+                        <div className="occupant-detail-item">
+                          <span className="detail-label">NIC</span>
+                          <span className="detail-value">{getOccupantNic(occupant)}</span>
+                        </div>
+                        <div className="occupant-detail-item">
+                          <span className="detail-label">Contact Number</span>
+                          <span className="detail-value">{occupant.User?.Contact_Number || 'N/A'}</span>
+                        </div>
+                        <div className="occupant-detail-item">
+                          <span className="detail-label">Email</span>
+                          <span className="detail-value">{occupant.User?.Email || 'N/A'}</span>
+                        </div>
+                        <div className="occupant-detail-item">
+                          <span className="detail-label">Check In</span>
+                          <span className="detail-value">{formatDate(occupant.CheckInDate)}</span>
+                        </div>
+                        <div className="occupant-detail-item">
+                          <span className="detail-label">Check Out</span>
+                          <span className="detail-value">{formatDate(occupant.CheckOutDate)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="modal-actions">
+                <button type="button" className="cancel-btn" onClick={handleCloseViewModal}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Room Modal */}
       {isEditModalOpen && (
@@ -548,12 +736,12 @@ const RoomManagement = () => {
                       placeholder="Enter student name or registration number"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearchStudents()}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearchStudents(searchQuery, { showValidationMessage: true })}
                       className="search-input"
                     />
                     <button 
                       className="search-btn" 
-                      onClick={handleSearchStudents}
+                      onClick={() => handleSearchStudents(searchQuery, { showValidationMessage: true })}
                       disabled={isSearching}
                     >
                       {isSearching ? 'Searching...' : 'Search'}
@@ -577,6 +765,12 @@ const RoomManagement = () => {
                           <button className="select-btn">Select</button>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {searchQuery.trim() && !isSearching && searchResults.length === 0 && (
+                    <div className="search-results">
+                      <h4>No students found.</h4>
                     </div>
                   )}
                 </div>
@@ -611,6 +805,10 @@ const RoomManagement = () => {
                     <div className="detail-row">
                       <span className="detail-label">Contact:</span>
                       <span className="detail-value">{selectedStudent.Contact_Number}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Emergency Contact:</span>
+                      <span className="detail-value">{selectedStudent.Emergency_Contact}</span>
                     </div>
                     <div className="detail-row">
                       <span className="detail-label">Email:</span>

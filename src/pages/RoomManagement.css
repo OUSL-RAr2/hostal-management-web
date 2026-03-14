@@ -289,6 +289,13 @@
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
+.assign-btn:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .edit-btn {
   background-color: #f59e0b;
   color: white;
@@ -701,6 +708,82 @@
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
+.occupants-modal {
+  max-width: 760px;
+}
+
+.occupants-modal-body {
+  padding: 24px;
+}
+
+.room-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.room-meta span {
+  padding: 8px 12px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #374151;
+  font-weight: 600;
+}
+
+.occupants-empty-state {
+  padding: 24px;
+  text-align: center;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.occupants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.occupant-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background-color: #f9fafb;
+  padding: 16px;
+}
+
+.occupant-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 12px;
+}
+
+.occupant-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+
+.occupant-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.occupant-detail-item .detail-label {
+  font-size: 12px;
+}
+
+.occupant-detail-item .detail-value {
+  font-size: 14px;
+  text-align: left;
+}
+
 @media (max-width: 768px) {
   .room-management {
     padding: 16px;
@@ -746,6 +829,10 @@
   }
 
   .date-inputs {
+    grid-template-columns: 1fr;
+  }
+
+  .occupant-details-grid {
     grid-template-columns: 1fr;
   }
 }
