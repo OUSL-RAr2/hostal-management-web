@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './RoomManagement.css';
 import AddRoom from './AddRoom';
 import { useNotification } from '../components/ui/useNotification';
@@ -36,10 +36,43 @@ const RoomManagement = () => {
   const [checkInDate, setCheckInDate] = useState('');
   const [checkOutDate, setCheckOutDate] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const searchAbortControllerRef = useRef(null);
 
   // Fetch rooms from API
   useEffect(() => {
     fetchRooms();
+  }, []);
+
+  useEffect(() => {
+    if (!isAssignModalOpen || selectedStudent) {
+      return;
+    }
+
+    const trimmedQuery = searchQuery.trim();
+
+    if (!trimmedQuery) {
+      if (searchAbortControllerRef.current) {
+        searchAbortControllerRef.current.abort();
+        searchAbortControllerRef.current = null;
+      }
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      handleSearchStudents(trimmedQuery);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [isAssignModalOpen, searchQuery, selectedStudent]);
+
+  useEffect(() => {
+    return () => {
+      if (searchAbortControllerRef.current) {
+        searchAbortControllerRef.current.abort();
+      }
+    };
   }, []);
 
   const fetchRooms = async () => {
@@ -122,6 +155,10 @@ const RoomManagement = () => {
   };
 
   const handleCloseAssignModal = () => {
+    if (searchAbortControllerRef.current) {
+      searchAbortControllerRef.current.abort();
+      searchAbortControllerRef.current = null;
+    }
     setIsAssignModalOpen(false);
     setAssigningRoom(null);
     setSearchQuery('');
@@ -175,36 +212,65 @@ const RoomManagement = () => {
     setIsLoadingOccupants(false);
   };
 
-  const handleSearchStudents = async () => {
-    if (!searchQuery.trim()) {
-      notify.info('Please enter a search term');
+  const handleSearchStudents = async (queryValue = searchQuery, options = {}) => {
+    const { showValidationMessage = false } = options;
+    const trimmedQuery = queryValue.trim();
+
+    if (!trimmedQuery) {
+      if (searchAbortControllerRef.current) {
+        searchAbortControllerRef.current.abort();
+        searchAbortControllerRef.current = null;
+      }
+      setSearchResults([]);
+      setIsSearching(false);
+      if (showValidationMessage) {
+        notify.info('Please enter a search term');
+      }
       return;
     }
 
+    if (searchAbortControllerRef.current) {
+      searchAbortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    searchAbortControllerRef.current = controller;
+
     setIsSearching(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/bookings/search-students?query=${encodeURIComponent(searchQuery)}`, {
-        credentials: 'include'
+      const response = await fetch(`http://localhost:5000/api/bookings/search-students?query=${encodeURIComponent(trimmedQuery)}`, {
+        credentials: 'include',
+        signal: controller.signal
       });
       const data = await response.json();
 
+      if (searchAbortControllerRef.current !== controller) {
+        return;
+      }
+
       if (response.ok) {
-        setSearchResults(data.data);
-        if (data.data.length === 0) {
-          notify.info('No students found');
-        }
+        setSearchResults(data.data || []);
       } else {
         notify.error(`Search failed: ${data.message}`);
       }
     } catch (error) {
-      notify.error(`Search error: ${error.message}`);
-      console.error('Search error:', error);
+      if (error.name !== 'AbortError') {
+        notify.error(`Search error: ${error.message}`);
+        console.error('Search error:', error);
+      }
     } finally {
-      setIsSearching(false);
+      if (searchAbortControllerRef.current === controller) {
+        searchAbortControllerRef.current = null;
+        setIsSearching(false);
+      }
     }
   };
 
   const handleSelectStudent = (student) => {
+    if (searchAbortControllerRef.current) {
+      searchAbortControllerRef.current.abort();
+      searchAbortControllerRef.current = null;
+    }
     setSelectedStudent(student);
     setSearchResults([]);
     setSearchQuery('');
@@ -670,12 +736,12 @@ const RoomManagement = () => {
                       placeholder="Enter student name or registration number"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearchStudents()}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearchStudents(searchQuery, { showValidationMessage: true })}
                       className="search-input"
                     />
                     <button 
                       className="search-btn" 
-                      onClick={handleSearchStudents}
+                      onClick={() => handleSearchStudents(searchQuery, { showValidationMessage: true })}
                       disabled={isSearching}
                     >
                       {isSearching ? 'Searching...' : 'Search'}
@@ -699,6 +765,12 @@ const RoomManagement = () => {
                           <button className="select-btn">Select</button>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {searchQuery.trim() && !isSearching && searchResults.length === 0 && (
+                    <div className="search-results">
+                      <h4>No students found.</h4>
                     </div>
                   )}
                 </div>
@@ -733,6 +805,10 @@ const RoomManagement = () => {
                     <div className="detail-row">
                       <span className="detail-label">Contact:</span>
                       <span className="detail-value">{selectedStudent.Contact_Number}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Emergency Contact:</span>
+                      <span className="detail-value">{selectedStudent.Emergency_Contact}</span>
                     </div>
                     <div className="detail-row">
                       <span className="detail-label">Email:</span>
