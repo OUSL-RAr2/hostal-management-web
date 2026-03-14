@@ -1,10 +1,121 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, UserCheck, UserX, Calendar, Clock, Home, User, Filter } from 'lucide-react';
+import { io } from 'socket.io-client';
 import './CheckInOut.css';
 
 const CheckInOut = () => {
   const [activeTab, setActiveTab] = useState('check-in');
   const [searchQuery, setSearchQuery] = useState('');
+  const [students, setStudents] = useState([]);
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ inside: 0, outside: 0 });
+  const socketRef = useRef(null);
+
+  useEffect(() => {
+    fetchData();
+
+    // Initialize WebSockets
+    socketRef.current = io('http://localhost:5000', {
+      withCredentials: true
+    });
+
+    // Listen for QR refresh events (which happen on successful scan)
+    socketRef.current.on('qr-refresh', (data) => {
+      console.log('Real-time update received:', data);
+      // Re-fetch data to sync all stats and student statuses
+      fetchData();
+    });
+
+    // Handle connection
+    socketRef.current.on('connect', () => {
+      console.log('Connected to WebSocket server');
+    });
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      // Fetch students status
+      const statusRes = await fetch('http://localhost:5000/api/qr/students-status');
+      const statusData = await statusRes.json();
+      
+      // Fetch stats
+      const statsRes = await fetch('http://localhost:5000/api/qr/statistics');
+      const statsResData = await statsRes.json();
+
+      if (statusData.success) {
+        setStudents(statusData.data.students);
+        setStats(statusData.data.summary);
+
+        // Derive recent activities from student logs if available
+        const activities = statusData.data.students
+          .filter(s => s.lastTimestamp)
+          .sort((a, b) => new Date(b.lastTimestamp) - new Date(a.lastTimestamp))
+          .slice(0, 10)
+          .map(s => ({
+              id: s.registrationNumber || s.userId,
+              name: s.username,
+              room: 'N/A', 
+              action: s.lastAction === 'check_in' ? 'Check-in' : 'Check-out',
+              time: new Date(s.lastTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              date: new Date(s.lastTimestamp).toLocaleDateString()
+          }));
+        setRecentActivities(activities);
+      }
+    } catch (error) {
+      console.error('Error fetching check-in/out data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCheckAction = async (userId, action) => {
+    try {
+      const dbAction = action === 'Check-in' ? 'check_in' : 'check_out';
+      
+      const response = await fetch('http://localhost:5000/api/qr/admin-student-toggle', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId, action: dbAction })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Refresh local data
+        fetchData();
+        // Force re-fetch the other dashboard stats for full consistency
+        // (already happens in fetchData)
+      } else {
+        alert(data.message || 'Action failed');
+      }
+    } catch (error) {
+      console.error('Action failed:', error);
+      alert('Network error while processing status update');
+    }
+  };
+
+  const filteredStudents = students.filter(student =>
+    student.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    student.nic.includes(searchQuery) ||
+    (student.registrationNumber && student.registrationNumber.toString().includes(searchQuery))
+  );
+
+  const availableForCheckIn = filteredStudents.filter(s => s.currentStatus === 'outside');
+  const availableForCheckOut = filteredStudents.filter(s => s.currentStatus === 'inside');
+
+  if (loading) {
+    return <div className="loading-container">Loading check-in/out data...</div>;
+  }
   const [selectedStudent, setSelectedStudent] = useState(null);
 
   const studentsData = [
