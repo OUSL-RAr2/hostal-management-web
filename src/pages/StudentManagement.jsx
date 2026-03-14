@@ -194,7 +194,7 @@ const StudentManagement = () => {
           <Search className="search-icon" size={20} />
           <input
             type="text"
-            placeholder="Search students by name or NIC..."
+            placeholder="Search students by name or Registration Number..."
             className="search-input"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -221,7 +221,7 @@ const StudentManagement = () => {
             <table className="students-table">
               <thead>
                 <tr>
-                  <th>NIC</th>
+                  <th>Registration Number</th>
                   <th>Name</th>
                   <th>Room</th>
                   <th>Status</th>
@@ -240,7 +240,7 @@ const StudentManagement = () => {
                 ) : (
                   studentsData.map((student, index) => (
                     <tr key={student.bookingId || index}>
-                      <td>{student.id}</td>
+                      <td>{student.registrationNumber || '-'}</td>
                       <td>{student.name}</td>
                       <td>{student.room}</td>
                       <td>
