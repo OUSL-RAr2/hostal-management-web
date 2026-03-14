@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, UserCheck, UserX, Calendar, Clock, Home, User, Filter } from 'lucide-react';
+import { Search, UserCheck, UserX, Calendar, Clock, User } from 'lucide-react';
 import { io } from 'socket.io-client';
 import './CheckInOut.css';
 
@@ -23,7 +23,6 @@ const CheckInOut = () => {
     // Listen for QR refresh events (which happen on successful scan)
     socketRef.current.on('qr-refresh', (data) => {
       console.log('Real-time update received:', data);
-      // Re-fetch data to sync all stats and student statuses
       fetchData();
     });
 
@@ -45,10 +44,6 @@ const CheckInOut = () => {
       // Fetch students status
       const statusRes = await fetch('http://localhost:5000/api/qr/students-status');
       const statusData = await statusRes.json();
-      
-      // Fetch stats
-      const statsRes = await fetch('http://localhost:5000/api/qr/statistics');
-      const statsResData = await statsRes.json();
 
       if (statusData.success) {
         setStudents(statusData.data.students);
@@ -62,7 +57,6 @@ const CheckInOut = () => {
           .map(s => ({
               id: s.registrationNumber || s.userId,
               name: s.username,
-              room: 'N/A', 
               action: s.lastAction === 'check_in' ? 'Check-in' : 'Check-out',
               time: new Date(s.lastTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               date: new Date(s.lastTimestamp).toLocaleDateString()
@@ -91,10 +85,7 @@ const CheckInOut = () => {
       const data = await response.json();
       
       if (data.success) {
-        // Refresh local data
         fetchData();
-        // Force re-fetch the other dashboard stats for full consistency
-        // (already happens in fetchData)
       } else {
         alert(data.message || 'Action failed');
       }
@@ -104,70 +95,34 @@ const CheckInOut = () => {
     }
   };
 
-  const filteredStudents = students.filter(student =>
-    student.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.nic.includes(searchQuery) ||
-    (student.registrationNumber && student.registrationNumber.toString().includes(searchQuery))
+  if (loading) {
+    return <div className="loading-container">Loading check-in/out data...</div>;
+  }
+
+  const filteredStudents = students.filter(s => 
+    s.username.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    s.nic.includes(searchQuery) || 
+    (s.registrationNumber && String(s.registrationNumber).includes(searchQuery))
   );
 
   const availableForCheckIn = filteredStudents.filter(s => s.currentStatus === 'outside');
   const availableForCheckOut = filteredStudents.filter(s => s.currentStatus === 'inside');
 
-  if (loading) {
-    return <div className="loading-container">Loading check-in/out data...</div>;
-  }
-  const [selectedStudent, setSelectedStudent] = useState(null);
-
-  const studentsData = [
-    { id: '223604291', name: 'K.M.T.N. Deshapriya', room: 'T-14', status: 'checked-out' },
-    { id: '123600601', name: 'A.M.S.G. Athapaththu', room: 'S-08', status: 'checked-out' },
-    { id: '723602367', name: 'G.A.C.Kawishka', room: 'F-24', status: 'checked-in' },
-    { id: '623606783', name: 'L.A.C.D. Lenagala', room: 'T-15', status: 'checked-in' },
-    { id: '523604291', name: 'P.A.S. Perera', room: 'B-201', status: 'checked-out' },
-    { id: '423600601', name: 'N.K. Silva', room: 'A-102', status: 'checked-in' },
-  ];
-
-  const recentActivities = [
-    { id: '223604291', name: 'K.M.T.N. Deshapriya', room: 'T-14', action: 'Check-in', time: '2 hours ago', date: '2025-03-03' },
-    { id: '123600601', name: 'A.M.S.G. Athapaththu', room: 'S-08', action: 'Check-out', time: '3 hours ago', date: '2025-03-03' },
-    { id: '723602367', name: 'G.A.C.Kawishka', room: 'F-24', action: 'Check-in', time: '5 hours ago', date: '2025-03-03' },
-    { id: '623606783', name: 'L.A.C.D. Lenagala', room: 'T-15', action: 'Check-out', time: '1 day ago', date: '2025-03-02' },
-  ];
-
-  const handleCheckIn = (student) => {
-    alert(`Check-in successful for ${student.name} - Room ${student.room}`);
-  };
-
-  const handleCheckOut = (student) => {
-    alert(`Check-out successful for ${student.name} - Room ${student.room}`);
-  };
-
-  const filteredStudents = studentsData.filter(student =>
-    student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.id.includes(searchQuery) ||
-    student.room.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const availableForCheckIn = filteredStudents.filter(s => s.status === 'checked-out');
-  const availableForCheckOut = filteredStudents.filter(s => s.status === 'checked-in');
-
   return (
     <div className="checkinout-page">
-      {/* Header */}
       <div className="checkinout-header">
         <h1>Check-in / Check-out Management</h1>
-        <p>Manage student check-ins and check-outs</p>
+        <p>Monitor real-time student presence in the hostel</p>
       </div>
 
-      {/* Stats Cards */}
       <div className="checkinout-stats">
         <div className="stat-card stat-blue">
           <div className="stat-icon-wrapper">
             <UserCheck size={24} />
           </div>
           <div className="stat-info">
-            <div className="stat-value">{studentsData.filter(s => s.status === 'checked-in').length}</div>
-            <div className="stat-label">Checked In</div>
+            <div className="stat-value">{stats.inside}</div>
+            <div className="stat-label">Students Inside</div>
           </div>
         </div>
         <div className="stat-card stat-orange">
@@ -175,8 +130,8 @@ const CheckInOut = () => {
             <UserX size={24} />
           </div>
           <div className="stat-info">
-            <div className="stat-value">{studentsData.filter(s => s.status === 'checked-out').length}</div>
-            <div className="stat-label">Checked Out</div>
+            <div className="stat-value">{stats.outside}</div>
+            <div className="stat-label">Students Outside</div>
           </div>
         </div>
         <div className="stat-card stat-green">
@@ -191,19 +146,17 @@ const CheckInOut = () => {
       </div>
 
       <div className="checkinout-container">
-        {/* Left Side - Check-in/out Form */}
         <div className="checkinout-form-section">
-          {/* Tabs */}
           <div className="checkinout-tabs">
             <button
-              className={`tab-btn ${activeTab === 'check-in' ? 'active' : ''}`}
+              className={	ab-btn }
               onClick={() => setActiveTab('check-in')}
             >
               <UserCheck size={20} />
               Check-in
             </button>
             <button
-              className={`tab-btn ${activeTab === 'check-out' ? 'active' : ''}`}
+              className={	ab-btn }
               onClick={() => setActiveTab('check-out')}
             >
               <UserX size={20} />
@@ -211,19 +164,17 @@ const CheckInOut = () => {
             </button>
           </div>
 
-          {/* Search */}
           <div className="search-container">
             <Search className="search-icon" size={20} />
             <input
               type="text"
-              placeholder="Search by student ID, name, or room..."
+              placeholder="Search by student ID or name..."
               className="search-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
-          {/* Student List */}
           <div className="student-list">
             {activeTab === 'check-in' && (
               <>
@@ -232,21 +183,17 @@ const CheckInOut = () => {
                   <p className="no-results">No students available for check-in</p>
                 ) : (
                   availableForCheckIn.map((student) => (
-                    <div key={student.id} className="student-card">
+                    <div key={student.userId} className="student-card">
                       <div className="student-info">
-                        <div className="student-name">{student.name}</div>
+                        <div className="student-name">{student.username}</div>
                         <div className="student-details">
                           <span className="detail-item">
                             <User size={14} />
-                            ID: {student.id}
-                          </span>
-                          <span className="detail-item">
-                            <Home size={14} />
-                            Room: {student.room}
+                            ID: {student.registrationNumber || student.userId}
                           </span>
                         </div>
                       </div>
-                      <button className="checkin-btn" onClick={() => handleCheckIn(student)}>
+                      <button className="checkin-btn" onClick={() => handleCheckAction(student.userId, 'Check-in')}>
                         <UserCheck size={18} />
                         Check In
                       </button>
@@ -263,21 +210,17 @@ const CheckInOut = () => {
                   <p className="no-results">No students available for check-out</p>
                 ) : (
                   availableForCheckOut.map((student) => (
-                    <div key={student.id} className="student-card">
+                    <div key={student.userId} className="student-card">
                       <div className="student-info">
-                        <div className="student-name">{student.name}</div>
+                        <div className="student-name">{student.username}</div>
                         <div className="student-details">
                           <span className="detail-item">
                             <User size={14} />
-                            ID: {student.id}
-                          </span>
-                          <span className="detail-item">
-                            <Home size={14} />
-                            Room: {student.room}
+                            ID: {student.registrationNumber || student.userId}
                           </span>
                         </div>
                       </div>
-                      <button className="checkout-btn" onClick={() => handleCheckOut(student)}>
+                      <button className="checkout-btn" onClick={() => handleCheckAction(student.userId, 'Check-out')}>
                         <UserX size={18} />
                         Check Out
                       </button>
@@ -289,31 +232,33 @@ const CheckInOut = () => {
           </div>
         </div>
 
-        {/* Right Side - Recent Activities */}
         <div className="recent-activities-section">
           <h3 className="section-title">
             <Clock size={20} />
             Recent Activities
           </h3>
           <div className="activities-list">
-            {recentActivities.map((activity, index) => (
-              <div key={index} className={`activity-card ${activity.action === 'Check-in' ? 'checkin' : 'checkout'}`}>
-                <div className="activity-icon">
-                  {activity.action === 'Check-in' ? <UserCheck size={20} /> : <UserX size={20} />}
-                </div>
-                <div className="activity-info">
-                  <div className="activity-student">{activity.name}</div>
-                  <div className="activity-details">
-                    <span className="activity-room">Room: {activity.room}</span>
-                    <span className="activity-action">{activity.action}</span>
+            {recentActivities.length === 0 ? (
+              <p className="no-results">No recent activities</p>
+            ) : (
+              recentActivities.map((activity, index) => (
+                <div key={index} className={`activity-card ${activity.action === 'Check-in' ? 'checkin' : 'checkout'}`}>
+                  <div className="activity-icon">
+                    {activity.action === 'Check-in' ? <UserCheck size={20} /> : <UserX size={20} />}
                   </div>
-                  <div className="activity-time">
-                    <Calendar size={12} />
-                    {activity.time}
+                  <div className="activity-info">
+                    <div className="activity-student">{activity.name}</div>
+                    <div className="activity-details">
+                      <span className="activity-action">{activity.action}</span>
+                    </div>
+                    <div className="activity-time">
+                      <Calendar size={12} />
+                      {activity.time} - {activity.date}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
