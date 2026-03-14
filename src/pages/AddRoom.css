@@ -1,15 +1,39 @@
 
 .add-room {
+    position: relative;
     width: 100%;
     max-width: 500px;
-    height: 90vh;   
+    max-height: 90vh;   
     background: #ffffff;
     border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
     padding: 25px;
     overflow-y: auto;
-    margin-left: 25%;
-    align-self: center;
+    margin: 0 auto;
+}
+
+/* Close Button */
+.close-modal-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 32px;
+    color: #999;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.3s ease;
+}
+
+.close-modal-btn:hover {
+    color: #333;
 }
 
 .add-room::-webkit-scrollbar {

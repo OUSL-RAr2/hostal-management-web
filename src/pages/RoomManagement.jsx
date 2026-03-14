@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import './RoomManagement.css';
+import AddRoom from './AddRoom';
 
 const RoomManagement = ({ setActiveMenu }) => {
   const [rooms, setRooms] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [isAddRoomModalOpen, setIsAddRoomModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
   const [assigningRoom, setAssigningRoom] = useState(null);
   const [editFormData, setEditFormData] = useState({
@@ -18,6 +20,8 @@ const RoomManagement = ({ setActiveMenu }) => {
   // Filter states
   const [filterGender, setFilterGender] = useState('all');
   const [filterFloor, setFilterFloor] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterStudentCount, setFilterStudentCount] = useState('all');
 
   // Assign modal states
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,10 +51,6 @@ const RoomManagement = ({ setActiveMenu }) => {
     } catch (error) {
       console.error('Error fetching rooms:', error);
     }
-  };
-
-  const handleAddRoom = () => {
-    setActiveMenu('Add Room');
   };
 
   const handleEditRoom = (room) => {
@@ -211,7 +211,15 @@ const RoomManagement = ({ setActiveMenu }) => {
     .filter(room => {
       const genderMatch = filterGender === 'all' || room.Gender === filterGender;
       const floorMatch = filterFloor === 'all' || room.FloorNumber.toString() === filterFloor;
-      return genderMatch && floorMatch;
+      const statusMatch = filterStatus === 'all' || room.Status.toLowerCase() === filterStatus.toLowerCase();
+      
+      let studentCountMatch = true;
+      if (filterStudentCount !== 'all') {
+        const count = parseInt(filterStudentCount);
+        studentCountMatch = room.CurrentOccupancy === count;
+      }
+      
+      return genderMatch && floorMatch && statusMatch && studentCountMatch;
     })
     .sort((a, b) => {
       // Define custom floor order: G, F, S, T
@@ -261,7 +269,7 @@ const RoomManagement = ({ setActiveMenu }) => {
           <p>Monitor room occupancy and allocation</p>
         </div>
         <div className="add-room-container">
-          <button className="add-room-btn" onClick={handleAddRoom}>Add New Room</button>
+          <button className="add-room-btn" onClick={() => setIsAddRoomModalOpen(true)}>Add New Room</button>
         </div>
       </div>
 
@@ -300,12 +308,46 @@ const RoomManagement = ({ setActiveMenu }) => {
             </select>
           </div>
 
-          {(filterGender !== 'all' || filterFloor !== 'all') && (
+          <div className="filter-group">
+            <label htmlFor="filter-status">Status:</label>
+            <select
+              id="filter-status"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">All</option>
+              <option value="available">Available</option>
+              <option value="occupied">Occupied</option>
+              <option value="maintenance">Maintenance</option>
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label htmlFor="filter-student-count">Student Count:</label>
+            <select
+              id="filter-student-count"
+              value={filterStudentCount}
+              onChange={(e) => setFilterStudentCount(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">All</option>
+              <option value="0">0 Students</option>
+              <option value="1">1 Student</option>
+              <option value="2">2 Students</option>
+              <option value="3">3 Students</option>
+              <option value="4">4 Students</option>
+            </select>
+          </div>
+
+          {(filterGender !== 'all' || filterFloor !== 'all' || filterStatus !== 'all' || filterStudentCount !== 'all') && (
             <button
               className="clear-filters-btn"
               onClick={() => {
                 setFilterGender('all');
                 setFilterFloor('all');
+                setFilterStatus('all');
+                setFilterStudentCount('all');
               }}
             >
               Clear Filters
@@ -319,8 +361,7 @@ const RoomManagement = ({ setActiveMenu }) => {
         <h2 className="section-title">Room Status</h2>
         <div className="room-stats-grid">
           {roomStats.map((stat, index) => (
-            <div key={index} className="room-stat-card">
-              <div className={`status-indicator ${stat.color}`}></div>
+            <div key={index} className={`room-stat-card ${stat.color}`}>
               <div className="room-stat-value">{stat.value}</div>
               <div className="room-stat-label">{stat.label}</div>
             </div>
@@ -629,6 +670,16 @@ const RoomManagement = ({ setActiveMenu }) => {
           </div>
         </div>
       )}
+
+      {/* Add Room Modal */}
+      <AddRoom 
+        isOpen={isAddRoomModalOpen} 
+        onClose={() => setIsAddRoomModalOpen(false)}
+        onSuccess={() => {
+          setIsAddRoomModalOpen(false);
+          fetchRooms();
+        }}
+      />
     </div>
   );
 };

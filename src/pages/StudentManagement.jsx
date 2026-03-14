@@ -15,16 +15,51 @@ const StudentManagement = ({ setActiveMenu }) => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
 
-  // Fetch students data when component mounts
+  const parseApiResponse = async (response) => {
+    const raw = await response.text();
+
+    if (!raw) return {};
+
+    try {
+      return JSON.parse(raw);
+    } catch {
+      if (raw.trim().startsWith('<')) {
+        throw new Error('Server returned an HTML response. Check that backend API is running on port 5000.');
+      }
+      throw new Error('Server returned an invalid JSON response.');
+    }
+  };
+
+  // Fetch students data when component mounts or page changes
   useEffect(() => {
-    fetchStudents();
-  }, []);
+    fetchStudents(currentPage, searchQuery);
+  }, [currentPage]);
 
-  const fetchStudents = async () => {
+  // Handle search with debouncing
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setCurrentPage(1); // Reset to first page when searching
+      fetchStudents(1, searchQuery);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  const fetchStudents = async (page = 1, search = '') => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/bookings', {
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: '10',
+        ...(search && { search: search })
+      });
+
+      const response = await fetch(`http://localhost:5000/api/users/panel?${queryParams}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -32,39 +67,26 @@ const StudentManagement = ({ setActiveMenu }) => {
         }
       });
 
-      const data = await response.json();
+      const data = await parseApiResponse(response);
 
       if (response.ok) {
-        // Map backend data to frontend format
-        const mappedStudents = data.data.map(booking => ({
-          id: booking.User?.NIC || 'N/A',
-          name: booking.User?.Username || 'Unknown',
-          registrationNumber: booking.User?.Registration_Number || 'N/A',
-          room: booking.Room?.RoomNumber || 'N/A',
-          status: booking.Status,
-          checkIn: booking.CheckInDate ? new Date(booking.CheckInDate).toLocaleString() : '-',
-          checkOut: booking.CheckOutDate ? new Date(booking.CheckOutDate).toLocaleString() : '-',
-          uid: booking.User?.UID,
-          bookingId: booking.BookingID
-        }));
-        setStudentsData(mappedStudents);
+        setStudentsData(data.data);
+        setCurrentPage(data.pagination.currentPage);
+        setTotalPages(data.pagination.totalPages);
+        setTotalUsers(data.pagination.totalUsers);
         setError(null);
       } else {
         setError(data.message || 'Failed to fetch students');
       }
     } catch (err) {
       console.error('Error fetching students:', err);
-      setError('Failed to connect to server');
+      setError(err.message || 'Failed to connect to server');
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredStudents = studentsData.filter(student =>
-    student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.id.includes(searchQuery) ||
-    (student.registrationNumber && student.registrationNumber.toString().includes(searchQuery))
-  );
+  // Search and filtering is now handled by backend
 
   // Format status display
   const formatStatus = (status) => {
@@ -77,6 +99,8 @@ const StudentManagement = ({ setActiveMenu }) => {
         return 'Pending';
       case 'cancelled':
         return 'Cancelled';
+      case 'no_booking':
+        return 'No Room Assigned';
       default:
         return status;
     }
@@ -93,14 +117,17 @@ const StudentManagement = ({ setActiveMenu }) => {
         return 'pending';
       case 'cancelled':
         return 'cancelled';
+      case 'no_booking':
+        return 'no-booking';
       default:
         return '';
     }
   };
 
   // Handle view student
-  const handleViewStudent = (studentId) => {
-    setSelectedStudentId(studentId);
+  const handleViewStudent = (student) => {
+    setSelectedStudent(student);
+    setSelectedStudentId(student?.uid || null);
     setIsViewModalOpen(true);
   };
 
@@ -108,6 +135,32 @@ const StudentManagement = ({ setActiveMenu }) => {
   const handleEditStudent = (studentId) => {
     setSelectedStudentId(studentId);
     setIsEditModalOpen(true);
+  };
+
+  // Handle delete student
+  const handleDeleteStudent = async (bookingId, studentName) => {
+    const confirmed = window.confirm(`Are you sure you want to delete ${studentName}? This action cannot be undone.`);
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/bookings/${bookingId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await parseApiResponse(response);
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to delete student');
+      }
+
+      await fetchStudents(currentPage, searchQuery);
+    } catch (err) {
+      console.error('Error deleting student:', err);
+      window.alert(err.message || 'Failed to delete student');
+    }
   };
 
   return (
@@ -169,14 +222,14 @@ const StudentManagement = ({ setActiveMenu }) => {
                 </tr>
               </thead>
               <tbody>
-                {filteredStudents.length === 0 ? (
+                {studentsData.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="no-data">
                       {searchQuery ? 'No students found matching your search' : 'No students data available'}
                     </td>
                   </tr>
                 ) : (
-                  filteredStudents.map((student, index) => (
+                  studentsData.map((student, index) => (
                     <tr key={student.bookingId || index}>
                       <td>{student.id}</td>
                       <td>{student.name}</td>
@@ -192,7 +245,7 @@ const StudentManagement = ({ setActiveMenu }) => {
                         <div className="action-buttons">
                           <button 
                             className="action-btn view-btn"
-                            onClick={() => handleViewStudent(student.uid)}
+                            onClick={() => handleViewStudent(student)}
                           >
                             View
                           </button>
@@ -201,6 +254,12 @@ const StudentManagement = ({ setActiveMenu }) => {
                             onClick={() => handleEditStudent(student.uid)}
                           >
                             Edit
+                          </button>
+                          <button 
+                            className="action-btn delete-btn"
+                            onClick={() => handleDeleteStudent(student.bookingId, student.name)}
+                          >
+                            Delete
                           </button>
                         </div>
                       </td>
@@ -211,6 +270,48 @@ const StudentManagement = ({ setActiveMenu }) => {
             </table>
           </div>
         )}
+
+        {/* Pagination Controls */}
+        {!loading && !error && totalPages > 1 && (
+          <div className="pagination-container">
+            <div className="pagination-info">
+              Showing page {currentPage} of {totalPages} ({totalUsers} total students)
+            </div>
+            <div className="pagination-controls">
+              <button
+                className="pagination-btn"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                First
+              </button>
+              <button
+                className="pagination-btn"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+              <span className="page-info">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                className="pagination-btn"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+              <button
+                className="pagination-btn"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                Last
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Register Student Modal */}
@@ -219,7 +320,7 @@ const StudentManagement = ({ setActiveMenu }) => {
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => {
           setIsModalOpen(false);
-          fetchStudents(); // Refresh the student list
+          fetchStudents(currentPage, searchQuery); // Refresh the student list
         }}
       />
 
@@ -228,6 +329,7 @@ const StudentManagement = ({ setActiveMenu }) => {
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
         studentId={selectedStudentId}
+        student={selectedStudent}
       />
 
       {/* Edit Student Modal */}
@@ -237,7 +339,7 @@ const StudentManagement = ({ setActiveMenu }) => {
         studentId={selectedStudentId}
         onSuccess={() => {
           setIsEditModalOpen(false);
-          fetchStudents(); // Refresh the student list
+          fetchStudents(currentPage, searchQuery); // Refresh the student list
         }}
       />
     </div>

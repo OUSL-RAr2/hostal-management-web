@@ -129,6 +129,18 @@
   transition: all 0.3s ease;
 }
 
+.room-stat-card.green {
+  background-color: rgba(16, 185, 129, 0.3);
+}
+
+.room-stat-card.red {
+  background-color: rgba(239, 68, 68, 0.3);
+}
+
+.room-stat-card.yellow {
+  background-color: rgba(245, 158, 11, 0.3);
+}
+
 .room-stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
