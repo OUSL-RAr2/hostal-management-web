@@ -5,10 +5,10 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   const [stats, setStats] = useState([
-    { icon: GraduationCap, value: 'Loading...', label: 'Total Students', color: 'blue' },
-    { icon: Building2, value: 'Loading...', label: 'Total Rooms', color: 'red' },
-    { icon: Home, value: 'Loading...', label: 'Occupied Rooms', color: 'green' },
-    { icon: FileText, value: 'Loading...', label: 'Pending Complaints', color: 'orange' },
+    { icon: GraduationCap, label: 'Total Students', color: 'blue' },
+    { icon: Building2, label: 'Total Rooms', color: 'red' },
+    { icon: Home, label: 'Occupied Rooms', color: 'green' },
+    { icon: FileText, label: 'Pending Complaints', color: 'orange' },
   ]);
 
   const [recentCheckIns, setRecentCheckIns] = useState([]);
