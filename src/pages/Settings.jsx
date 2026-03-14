@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, Bell, Shield, Globe, Moon, Mail, Phone, MapPin, Save, UserPlus, Users as UsersIcon, X, LogOut } from 'lucide-react';
 import './Settings.css';
+import { useNotification } from '../components/ui/useNotification';
 
 const Settings = ({ onLogout }) => {
   const navigate = useNavigate();
+  const notify = useNotification();
   const [activeTab, setActiveTab] = useState('profile');
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -44,17 +46,23 @@ const Settings = ({ onLogout }) => {
   };
 
   const handleSave = () => {
-    alert('Settings saved successfully!');
+    notify.success('Settings saved successfully!');
   };
 
   const handleAddAdmin = () => {
-    alert(`New admin added: ${newAdmin.name}`);
+    notify.success(`New admin added: ${newAdmin.name}`);
     setShowAddAdminModal(false);
     setNewAdmin({ name: '', email: '', phone: '', role: 'admin' });
   };
 
-  const handleLogout = () => {
-    const confirmLogout = window.confirm('Are you sure you want to logout?');
+  const handleLogout = async () => {
+    const confirmLogout = await notify.confirm({
+      title: 'Logout',
+      message: 'Are you sure you want to logout?',
+      confirmText: 'Logout',
+      cancelText: 'Cancel',
+      tone: 'primary'
+    });
     if (confirmLogout) {
       // clear token & user data
       localStorage.removeItem('authToken');

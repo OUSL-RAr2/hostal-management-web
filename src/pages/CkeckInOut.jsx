@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, UserCheck, UserX, Calendar, Clock, User } from 'lucide-react';
 import { io } from 'socket.io-client';
 import './CheckInOut.css';
+import { useNotification } from '../components/ui/useNotification';
 
 const CheckInOut = () => {
+  const notify = useNotification();
   const [activeTab, setActiveTab] = useState('check-in');
   const [searchQuery, setSearchQuery] = useState('');
   const [students, setStudents] = useState([]);
@@ -126,11 +128,11 @@ const CheckInOut = () => {
       if (data.success) {
         fetchData();
       } else {
-        alert(data.message || 'Action failed');
+        notify.error(data.message || 'Action failed');
       }
     } catch (error) {
       console.error('Action failed:', error);
-      alert('Network error while processing status update');
+      notify.error('Network error while processing status update');
     }
   };
 
