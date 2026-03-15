@@ -72,3 +72,9 @@
 .menu-item svg {
   flex-shrink: 0;
 }
+
+@media print {
+  .sidebar {
+    display: none !important;
+  }
+}

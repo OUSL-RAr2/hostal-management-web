@@ -178,6 +178,15 @@
   background: #f0f9f0;
 }
 
+.btn-pdf {
+  color: #6f42c1;
+  border-color: #6f42c1;
+}
+
+.btn-pdf:hover {
+  background: #f5f0ff;
+}
+
 /* Error Message */
 .error-message {
   background: #fee;
@@ -339,54 +348,116 @@
 
 /* Print Styles */
 @media print {
+  @page {
+    size: auto;
+    margin: 15mm;
+  }
+
+  body, html {
+    background: white !important;
+    color: #222 !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+
   .report-container {
     background: white;
-    padding: 10px;
+    padding: 8px;
+    margin: 0;
+    box-shadow: none;
   }
 
   .no-print {
-    display: none;
+    display: none !important;
   }
 
   .report-header {
     background: white;
-    color: #333;
-    border: 2px solid #333;
-    margin: 0 0 20px 0;
+    color: #111;
+    border: 1px solid #444;
+    box-shadow: none;
+    padding: 12px;
+    margin: 0 0 14px 0;
   }
 
-  .report-controls {
-    display: none;
+  .report-header h1 {
+    font-size: 20px;
+    color: #111;
+    margin-bottom: 4px;
+  }
+
+  .report-header p {
+    color: #444;
+    font-size: 12px;
+  }
+
+  .report-controls,
+  .btn-action,
+  .report-tabs,
+  .report-actions,
+  .empty-state,
+  .loading,
+  .error-message {
+    display: none !important;
+  }
+
+  .report-summary {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+    margin-bottom: 14px;
+    padding: 0;
+  }
+
+  .summary-card {
+    background: transparent;
+    border: 1px solid #bbb;
+    box-shadow: none;
+    padding: 10px;
+    margin-bottom: 10px;
   }
 
   .report-table-container {
-    box-shadow: none;
+    background: transparent;
+    border: none;
     padding: 0;
   }
 
   .report-table {
-    font-size: 0.9rem;
+    font-size: 10.5pt;
+    border: 1px solid #444;
+    width: 100%;
+    page-break-inside: avoid;
   }
 
-  .report-table th {
-    background: #333;
-    color: white;
-    padding: 12px;
+  .report-table thead {
+    background: #444 !important;
+    color: white !important;
+  }
+
+  .report-table th,
+  .report-table td {
+    border: 1px solid #999;
+    padding: 8px;
+    color: #000;
   }
 
   .report-table tbody tr:nth-child(even) {
-    background: #f5f5f5;
+    background: #f9f9f9;
   }
 
-  .report-table td {
-    border: 1px solid #ddd;
-    padding: 10px;
+  .report-table tbody tr {
+    background: #fff;
   }
 
-  .btn-action,
-  .report-tabs,
-  .report-actions {
-    display: none;
+  .report-table tbody tr:last-child {
+    page-break-after: auto;
+  }
+
+  .report-table th {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 }
 
